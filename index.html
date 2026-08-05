@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Dias - Acelera CS</title>
+    <!-- Font Inter para copiar fielmente a tipografia do app -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f1f2f7;
+            display: flex;
+            min-height: 100vh;
+            color: #1a1d24;
+        }
+
+        
+
+        /* --- CONTEÚDO PRINCIPAL (DIREITA) --- */
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            width: calc(100% - 250px);
+            padding: 40px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .page-title {
+            color: #1a1d24;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #9499a6;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        /* SELETOR PLANO */
+        .plan-selector-container {
+            display: flex;
+            margin: 20px 0;
+            background: #e4e6f1;
+            padding: 4px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .plan-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #727785;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.2s ease;
+        }
+
+        .plan-btn.active {
+            background: #6226ef;
+            color: #ffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* CONTROLES */
+        .control-group {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            margin-bottom: 25px;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #e4e6f1;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1a1d24;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #1a1d24;
+            outline: none;
+            transition: all 0.2s;
+            background: #ffffff;
+        }
+
+        input[type="date"]:focus {
+            border-color: #6226ef;
+            box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.15);
+        }
+
+        .btn-reset {
+            padding: 12px 24px;
+            background-color: #F09353;
+            color: #ffff;
+            border: 1px solid #e4e6f1;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 47px;
+        }
+
+        .btn-reset:hover {
+            background-color: #DB7F3E;
+            color: #3A2212;
+        }
+
+        .progress-counter {
+            font-size: 0.85rem;
+            color: #6226ef;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: none;
+            background: #f3f0ff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        /* TABELA ESTILO SAAS */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e4e6f1;
+            display: none;
+        }
+
+        .results-table th, .results-table td {
+            padding: 18px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f1f2f7;
+            vertical-align: middle;
+        }
+
+        .results-table th {
+            background-color: #fafafc;
+            color: #727785;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e4e6f1;
+        }
+
+        /* FLUXO DINÂMICO */
+        .results-table tr.em-processo {
+            background-color: #fff9f5 !important;
+            box-shadow: inset 4px 0px 0px #ea580c;
+        }
+        .results-table tr.em-processo .text-msg {
+            color: #c2410c;
+            font-weight: 600;
+        }
+        .results-table tr.em-processo .date-val {
+            background-color: #ffedd5 !important;
+            color: #c2410c !important;
+            border: 1px solid #fed7aa;
+        }
+        .results-table tr.em-processo .btn-copy {
+            background-color: #ea580c !important;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+        }
+
+        .results-table tr.concluido {
+            opacity: 0.5;
+            background-color: #fafafa !important;
+        }
+        .results-table tr.concluido .text-msg {
+            text-decoration: line-through;
+            color: #9499a6;
+        }
+        .results-table tr.concluido .date-val {
+            background-color: #f1f2f7 !important;
+            color: #727785 !important;
+            border: none;
+        }
+        .results-table tr.concluido .btn-copy {
+            background-color: #9499a6 !important;
+            box-shadow: none;
+        }
+
+        .btn-copy {
+            display: inline-block;
+            background-color: #6226ef;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            position: relative;
+            min-width: 115px;
+            text-align: center;
+        }
+
+        .btn-copy:hover {
+            background-color: #4919be;
+            box-shadow: 0 4px 12px rgba(98, 38, 239, 0.2);
+        }
+
+        .text-msg {
+            color: #444957;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .date-val {
+            color: #1a1d24;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 8px;
+            background-color: #fafafc;
+            border: 1px solid #e4e6f1;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #1a1d24;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 6px 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 135%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .btn-copy.copied .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- --- MENUBAR LATERAL FIEL (DesignOS Style) --- -->
+    <div id="sidebar-container"></div>
+    
+
+<main class="main-content">
+    <div class="container">
+        <h2 class="page-title">Welcome back, Campeão 👋</h2>
+        <p class="subtitle">Contagem de Dias Úteis & Mapeamento do Fluxo de Atendimento de CS.</p>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div class="plan-selector-container">
+                <button class="plan-btn active" id="btnPos" onclick="mudarPlano('pos')">PÓS-PAGO</button>
+                <button class="plan-btn" id="btnPre" onclick="mudarPlano('pre')">PRÉ-PAGO</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <div class="form-group">
+                <label for="startDate">Data Inicial do Fluxo:</label>
+                <input type="date" id="startDate" onchange="processarDataEcalcular()">
+            </div>
+            <button class="btn-reset" onclick="reiniciarPainel()">Reiniciar</button>
+        </div>
+
+        <div class="progress-counter" id="progressCounter">0 de 0 tarefas realizadas</div>
+
+        <table class="results-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Gatilho</th>
+                    <th style="width: 55%;">Descrição da Mensagem / Registro</th>
+                    <th style="width: 25%;">Data Limite</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    let planoAtual = 'pos';
+    const anoAtual = 2026; 
+
+    const templatesPos = [
+        { dias: 0, label: "D+00", texto: "(CS Moises) Boas-vindas e apresentação D+0" },
+        { dias: 1, label: "D+01", texto: "(CS Moises) Validação de consumo (D+1)" },
+        { dias: 2, label: "D+02", texto: "(CS Moises) Canais de atendimento (D+2)" },
+        { dias: 3, label: "D+03", texto: "(CS Moises) 2º Chamado para Treinamento (D+3)" },
+        { dias: 5, label: "D+05", texto: "(CS Moises) 3º chamado para treinamento (D+5)" },
+        { dias: 10, label: "D+10", texto: "(CS Moises) Acompanhamento de consumo 1 (D+10)" },
+        { dias: 15, label: "D+15", texto: "(CS Moises) E-mail sobre Funcionalidades (D+15)" },
+        { dias: 20, label: "D+20", texto: "(CS Moises) Acompanhamento de consumo 2 (D+20)" },
+        { dias: 25, label: "D+25", texto: "(CS Moises) E-mail sobre Qualificação e score (D+25)" },
+        { dias: 30, label: "D+30", texto: "(CS Moises) E-mail sobre API (D+30)" },
+        { dias: 35, label: "D+35", texto: "(CS Moises) E-mail sobre Relatórios (D+35)" },
+        { dias: 35, label: "D+35", texto: "(CS Moises) E-mail sobre Portfólio Lemit Brasil (D+35)" },
+        { dias: 40, label: "D+40", texto: "(CS Moises) Acompanhamento de consumo (D+40)" },
+        { dias: 40, label: "D+40", texto: "(CS Moises) Reunião estratégica (D+40) - para clientes > R$500" },
+        { dias: 45, label: "D+45", texto: "(CS Moises) Conclusão do onboarding (D+45)" }
+    ];
+
+    const templatesPreBase = [
+        { dias: 0, texto: "(CS Moises) Boas-vindas" },
+        { dias: 1, texto: "(CS Moises) Canais de atendimento D+1" },
+        { dias: 2, texto: "(CS Moises) Validação de acesso e recarga D+2" },
+        { dias: 5, texto: "(CS Moises) E-mail sobre funcionalidades (D+05)" },
+        { dias: 10, texto: "(CS Moises) E-mail sobre qualificação e score (D+10)" },
+        { dias: 20, texto: "(CS Moises) E-mail sobre API (D+20)" },
+        { dias: 30, texto: "(CS Moises) E-mail sobre relatórios (D+30)" },
+        { dias: 45, texto: "(CS Moises) Conclusão do onboarding (D+45)" }
+    ];
+
+    let historicoConcluidos = new Set();
+    let indexEmProcesso = null;
+
+    function mudarPlano(tipo) {
+        planoAtual = tipo;
+        document.getElementById('btnPos').classList.toggle('active', tipo === 'pos');
+        document.getElementById('btnPre').classList.toggle('active', tipo === 'pre');
+        processarDataEcalcular();
+    }
+
+    function formatarData(data) {
+        const opcoes = { day: '2-digit', month: 'short', year: 'numeric' };
+        return data.toLocaleDateString('pt-BR', opcoes).replace('.', '');
+    }
+
+    function adicionarDiasUteis(dataInicial, diasUteisParaAdicionar) {
+        let dataAtual = new Date(dataInicial.getTime());
+        let diasAdicionados = 0;
+        while (diasAdicionados < diasUteisParaAdicionar) {
+            dataAtual.setDate(dataAtual.getDate() + 1);
+            const diaDaSemana = dataAtual.getDay();
+            if (diaDaSemana !== 0 && diaDaSemana !== 6) {
+                diasAdicionados++;
+            }
+        }
+        return dataAtual;
+    }
+
+    function obterProximoDiaSemana(dataInicial, diaSemanaAlvo) {
+        let dataResult = new Date(dataInicial.getTime());
+        while (dataResult.getDay() !== diaSemanaAlvo) {
+            dataResult.setDate(dataResult.getDate() + 1);
+        }
+        return dataResult;
+    }
+
+    function copiarTexto(elementoBotao, textoParaCopiar, labelOriginal, index) {
+        if (indexEmProcesso === index) {
+            navigator.clipboard.writeText(textoParaCopiar);
+            mostrarTooltip(elementoBotao);
+            return;
+        }
+        if (indexEmProcesso !== null) {
+            historicoConcluidos.add(indexEmProcesso);
+        }
+        indexEmProcesso = index;
+        historicoConcluidos.delete(index);
+
+        navigator.clipboard.writeText(textoParaCopiar).then(() => {
+            mostrarTooltip(elementoBotao);
+            atualizarInterfaceFluxo();
+        }).catch(err => console.error('Erro ao copiar: ', err));
+    }
+
+    function mostrarTooltip(elementoBotao) {
+        elementoBotao.classList.add('copied');
+        setTimeout(() => {
+            elementoBotao.classList.remove('copied');
+        }, 1200);
+    }
+
+    function atualizarInterfaceFluxo() {
+        const linhas = document.querySelectorAll('#resultsBody tr');
+        linhas.forEach(linha => {
+            const idx = parseInt(linha.getAttribute('data-index'));
+            const botao = linha.querySelector('.btn-copy');
+            if(!botao) return;
+            const labelOriginal = botao.getAttribute('data-label');
+
+            linha.classList.remove('em-processo', 'concluido');
+
+            if (idx === indexEmProcesso) {
+                linha.classList.add('em-processo');
+                botao.innerHTML = `✍ Processo <span class="tooltip-text">Copiado!</span>`;
+            } else if (historicoConcluidos.has(idx)) {
+                linha.classList.add('concluido');
+                botao.innerHTML = `✔ Feito <span class="tooltip-text">Copiado!</span>`;
+            } else {
+                botao.innerHTML = `${labelOriginal} <span class="tooltip-text">Copiado!</span>`;
+            }
+        });
+
+        const totalConcluidos = historicoConcluidos.size + (indexEmProcesso !== null ? 1 : 0);
+        const contador = document.getElementById('progressCounter');
+        contador.textContent = `${totalConcluidos} de ${linhas.length} tarefas mapeadas no fluxo`;
+    }
+
+    function reiniciarPainel() {
+        historicoConcluidos.clear();
+        indexEmProcesso = null;
+        
+        const inputDate = document.getElementById('startDate');
+        if (inputDate.value) {
+            processarDataEcalcular();
+        } else {
+            document.getElementById('resultsTable').style.display = 'none';
+            document.getElementById('progressCounter').style.display = 'none';
+            document.getElementById('resultsBody').innerHTML = '';
+        }
+    }
+
+    function processarDataEcalcular() {
+        const inputDate = document.getElementById('startDate');
+        const valorData = inputDate.value;
+        const tabela = document.getElementById('resultsTable');
+        const contador = document.getElementById('progressCounter');
+
+        if (!valorData) {
+            tabela.style.display = 'none';
+            contador.style.display = 'none';
+            return;
+        }
+
+        const partes = valorData.split('-');
+        const mes = parseInt(partes[1], 10) - 1;
+        const dia = parseInt(partes[2], 10);
+
+        const dataForcada = new Date(anoAtual, mes, dia);
+
+        const mesFormatado = String(mes + 1).padStart(2, '0');
+        const diaFormatado = String(dia).padStart(2, '0');
+        inputDate.value = `${anoAtual}-${mesFormatado}-${diaFormatado}`;
+
+        calcularDiasUteis(dataForcada);
+    }
+
+    function calcularDiasUteis(dataInicial) {
+        const tbody = document.getElementById('resultsBody');
+        const tabela = document.getElementById('resultsTable');
+        const contador = document.getElementById('progressCounter');
+
+        tbody.innerHTML = '';
+        let listaGatilhos = [];
+
+        if (planoAtual === 'pos') {
+            listaGatilhos = templatesPos.map(regra => {
+                return {
+                    label: regra.label,
+                    texto: regra.texto,
+                    data: adicionarDiasUteis(dataInicial, regra.dias)
+                };
+            });
+        } else {
+            const diaSemanaInicio = dataInicial.getDay(); 
+            let dataReferenciaSemana = new Date(dataInicial.getTime());
+
+            if (diaSemanaInicio >= 3 || diaSemanaInicio === 0) { 
+                while(dataReferenciaSemana.getDay() !== 1) {
+                    dataReferenciaSemana.setDate(dataReferenciaSemana.getDate() + 1);
+                }
+            } else {
+                while(dataReferenciaSemana.getDay() !== 1) {
+                    dataReferenciaSemana.setDate(dataReferenciaSemana.getDate() - 1);
+                }
+            }
+
+            const dataWebinar = obterProximoDiaSemana(dataReferenciaSemana, 2);   
+            const dataPlantaoQua = obterProximoDiaSemana(dataReferenciaSemana, 3); 
+            const dataPlantaoSex = obterProximoDiaSemana(dataReferenciaSemana, 5); 
+
+            listaGatilhos = [
+                { label: "D+00", texto: templatesPreBase[0].texto, data: adicionarDiasUteis(dataInicial, 0) },
+                { label: "D+01", texto: templatesPreBase[1].texto, data: adicionarDiasUteis(dataInicial, 1) },
+                { label: "D+02", texto: templatesPreBase[2].texto, data: adicionarDiasUteis(dataInicial, 2) },
+                
+                { label: "Webinar", texto: "Webinar / Plantão de Dúvidas Onboarding", data: dataWebinar },
+                { label: "Plantão Qua", texto: "Plantão de Dúvidas Onboarding — Quarta-feira", data: dataPlantaoQua },
+                { label: "Plantão Sex", texto: "Plantão de Dúvidas Onboarding — Sexta-feira", data: dataPlantaoSex },
+
+                { label: "D+05", texto: templatesPreBase[3].texto, data: adicionarDiasUteis(dataInicial, 5) },
+                { label: "D+10", texto: templatesPreBase[4].texto, data: adicionarDiasUteis(dataInicial, 10) },
+                { label: "D+20", texto: templatesPreBase[5].texto, data: adicionarDiasUteis(dataInicial, 20) },
+                { label: "D+30", texto: templatesPreBase[6].texto, data: adicionarDiasUteis(dataInicial, 30) },
+                { label: "D+45", texto: templatesPreBase[7].texto, data: adicionarDiasUteis(dataInicial, 45) }
+            ];
+        }
+
+        listaGatilhos.forEach((regra, index) => {
+            const dataFormatada = formatarData(regra.data);
+
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-index', index);
+            
+            const tdBotao = document.createElement('td');
+            const botao = document.createElement('button');
+            botao.className = 'btn-copy';
+            botao.setAttribute('data-label', regra.label);
+            botao.onclick = function() { copiarTexto(this, regra.texto, regra.label, index); };
+            botao.innerHTML = `${regra.label} <span class="tooltip-text">Copiado!</span>`;
+            tdBotao.appendChild(botao);
+
+            const tdTexto = document.createElement('td');
+            tdTexto.className = 'text-msg';
+            tdTexto.textContent = regra.texto;
+
+            const tdData = document.createElement('td');
+            tdData.innerHTML = `<span class="date-val">${dataFormatada}</span>`;
+
+            tr.appendChild(tdBotao);
+            tr.appendChild(tdTexto);
+            tr.appendChild(tdData);
+            tbody.appendChild(tr);
+        });
+
+        tabela.style.display = 'table';
+        contador.style.display = 'block';
+        atualizarInterfaceFluxo();
+    }
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>

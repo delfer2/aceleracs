@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Criar Conta - Acelera CS</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- SDK do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        background-color: #f1f2f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+        color: #1a1d24;
+      }
+
+      .auth-card {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        padding: 36px 32px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e4e6f1;
+      }
+
+      .brand-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .brand-icon {
+        width: 44px;
+        height: 44px;
+        background: #6226ef;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+      }
+
+      .brand-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1a1d24;
+        letter-spacing: -0.3px;
+      }
+
+      .brand-subtitle {
+        font-size: 0.85rem;
+        color: #727785;
+        margin-top: 4px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1a1d24;
+        margin-bottom: 6px;
+      }
+
+      input {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.2s;
+      }
+
+      input:focus {
+        border-color: #6226ef;
+        box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.1);
+      }
+
+      .btn-submit {
+        width: 100%;
+        background: #6226ef;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+        margin-top: 6px;
+        transition: background 0.2s;
+      }
+
+      .btn-submit:hover {
+        background: #4b18cb;
+      }
+
+      .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .auth-footer {
+        text-align: center;
+        margin-top: 24px;
+        font-size: 0.875rem;
+        color: #64748b;
+      }
+
+      .auth-footer a {
+        color: #6226ef;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .auth-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .alert-msg {
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.825rem;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .alert-danger {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+
+      .alert-success {
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="brand-icon">𓅂</div>
+        <div class="brand-title">Acelera CS</div>
+        <div class="brand-subtitle">Crie sua conta de acesso rápida</div>
+      </div>
+
+      <div class="alert-msg alert-danger" id="errorAlert"></div>
+      <div class="alert-msg alert-success" id="successAlert"></div>
+
+      <form id="signupForm" onsubmit="realizarCadastro(event)">
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            required
+            placeholder="seu.nome@empresa.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Senha (mínimo 6 caracteres)</label>
+          <input
+            type="password"
+            id="password"
+            required
+            minlength="6"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirme sua senha</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            required
+            minlength="6"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          Criar minha conta
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Já possui uma conta? <a href="login.html">Fazer Login</a>
+      </div>
+    </div>
+
+    <script>
+      const SUPABASE_URL = 'https://pgsjhesbgqcqilkxfzed.supabase.co';
+      const SUPABASE_ANON_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnc2poZXNiZ3FjcWlsa3hmemVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNjkwMjQsImV4cCI6MjEwMDc0NTAyNH0.YmZ41BDMU_cafyTOInh-R4aSotvXnnWXCuPqorsfxqg';
+      const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      async function realizarCadastro(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        const errAlert = document.getElementById('errorAlert');
+        const succAlert = document.getElementById('successAlert');
+
+        errAlert.style.display = 'none';
+        succAlert.style.display = 'none';
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword =
+          document.getElementById('confirmPassword').value;
+
+        // Validação de senhas iguais
+        if (password !== confirmPassword) {
+          errAlert.innerText = 'As senhas informadas não coincidem.';
+          errAlert.style.display = 'block';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Cadastrando...';
+
+        const { data, error } = await _supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) {
+          errAlert.innerText =
+            'Erro ao cadastrar: ' + traduzirErro(error.message);
+          errAlert.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = 'Criar minha conta';
+        } else {
+          succAlert.innerText =
+            'Conta criada com sucesso! Redirecionando para o login...';
+          succAlert.style.display = 'block';
+          document.getElementById('signupForm').reset();
+
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        }
+      }
+
+      function traduzirErro(msg) {
+        if (msg.includes('User already registered'))
+          return 'Este e-mail já está cadastrado.';
+        if (msg.includes('Password should be at least'))
+          return 'A senha precisa ter pelo menos 6 caracteres.';
+        return msg;
+      }
+    </script>
+  </body>
+</html>

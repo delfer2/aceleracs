@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerador de Textos de Atividades - CS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="auth.js"></script>
+    <!-- Font Inter para copiar fielmente a tipografia do app -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        background-color: #f1f2f7;
+        display: flex;
+        min-height: 100vh;
+        color: #1a1d24;
+      }
+
+      /* --- CONTEÚDO DO DASHBOARD --- */
+      .main-content {
+        margin-left: 250px;
+        flex: 1;
+        width: calc(100% - 250px);
+        padding: 40px 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+      }
+
+      .page-title {
+        color: #1a1d24;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+        letter-spacing: -0.5px;
+      }
+
+      .subtitle {
+        color: #9499a6;
+        margin-bottom: 25px;
+        font-size: 0.95rem;
+      }
+
+      /* --- SELETOR DE ABAS ESTILO DASHBOARD --- */
+      .plan-selector-container {
+        display: flex;
+        margin: 20px 0;
+        background: #e4e6f1;
+        padding: 4px;
+        border-radius: 12px;
+        width: fit-content;
+      }
+
+      .plan-btn {
+        padding: 8px 20px;
+        border: none;
+        background: transparent;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #727785;
+        cursor: pointer;
+        border-radius: 9px;
+        transition: all 0.2s ease;
+      }
+
+      .plan-btn.active {
+        background: #6226ef;
+        color: #ffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .date-badge {
+        background-color: #fff;
+        color: #6226ef;
+        border: 1px solid #e4e6f1;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+      }
+
+      /* --- CARDS ESTILO DESIGN OS --- */
+      .activity-card {
+        background: #ffffff;
+        border: 1px solid #e4e6f1;
+        border-radius: 16px;
+        margin-bottom: 14px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+
+      .activity-card:hover {
+        border-color: #cbcedb;
+        box-shadow: 0 4px 20px rgba(98, 38, 239, 0.03);
+      }
+
+      .card-header {
+        padding: 20px 24px;
+        background: #ffffff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1d24;
+      }
+
+      .card-toggle-icon {
+        color: #9499a6;
+        font-size: 0.75rem;
+        transition: transform 0.2s;
+      }
+
+      .card-body {
+        padding: 0 24px;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.25s ease-out;
+        background: #ffffff;
+      }
+
+      .activity-card.open {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+      }
+
+      .activity-card.open .card-body {
+        padding: 0 24px 24px 24px;
+        max-height: 2500px;
+      }
+
+      .activity-card.open .card-toggle-icon {
+        transform: rotate(180deg);
+      }
+
+      /* --- SEÇÕES INTERNAS DO CARD --- */
+      .topic-container {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f1f2f7;
+      }
+
+      .topic-container:first-child {
+        border-top: none;
+        margin-top: 8px;
+        padding-top: 0;
+      }
+
+      .topic-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6226ef;
+        background: #f3f0ff;
+        padding: 4px 10px;
+        border-radius: 6px;
+        width: fit-content;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .text-preview-box {
+        background: #fafafc;
+        border: 1px solid #e4e6f1;
+        border-radius: 12px;
+        padding: 18px;
+        color: #444957;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 14px;
+        white-space: pre-wrap;
+      }
+
+      .text-preview-box strong {
+        color: #6226ef;
+        background: #f3f0ff;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+
+      .btn-copy {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #6226ef;
+        color: white;
+        border: none;
+        padding: 10px 22px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        position: relative;
+        gap: 8px;
+      }
+
+      .btn-copy:hover {
+        background-color: #4919be;
+        box-shadow: 0 4px 12px rgba(98, 38, 239, 0.2);
+      }
+
+      .tooltip-text {
+        visibility: hidden;
+        background-color: #1a1d24;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 6px 12px;
+        position: absolute;
+        z-index: 10;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.15s;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        font-weight: normal;
+      }
+
+      .btn-copy.copied .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- --- MENUBAR LATERAL FIEL (DesignOS Style) --- -->
+    <div id="sidebar-container"></div>
+
+    <!-- --- ÁREA DE CONTEÚDO PRINCIPAL --- -->
+    <main class="main-content">
+      <div class="container">
+        <h2 class="page-title">Atividades do dia</h2>
+        <p class="subtitle">
+          Selecione a atividade para visualizar e copiar o registro com a data
+          de hoje atualizada.
+        </p>
+
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+          "
+        >
+          <div class="plan-selector-container">
+            <button
+              class="plan-btn active"
+              id="btnPos"
+              onclick="mudarPlano('pos')"
+            >
+              PÓS-PAGO
+            </button>
+            <button class="plan-btn" id="btnPre" onclick="mudarPlano('pre')">
+              PRÉ-PAGO
+            </button>
+          </div>
+          <div class="date-badge" id="currentDateBadge">Hoje é: --/--/----</div>
+        </div>
+
+        <div id="cardsContainer"></div>
+      </div>
+    </main>
+
+    <script>
+      let planoAtual = 'pos';
+
+      const listaAtividadesPos = [
+        {
+          titulo: '(CS Moises) Boas-vindas e apresentação D+0',
+          topicos: [
+            {
+              subtitulo: 'Registro',
+              texto:
+                'Mensagem de apresentação e boas vindas enviada dia [DATA] ao cliente, chamando para treinamento com especialistas.',
+            },
+            {
+              subtitulo: 'Mensagem WhatsApp',
+              texto:
+                'Olá, ! Tudo bem? 👋\n\nMe chamo Moisés e vou acompanhar você nesse início de utilização da Lemit.\n\nMeu objetivo é ajudar para que sua empresa comece a usar a plataforma da melhor forma possível e consiga extrair valor dela desde o começo. 🚀\n\nGostaria de agendar seu treinamento? Assim apresento os principais recursos, tiro dúvidas e deixamos tudo preparado para vocês começarem.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Validação de consumo (D+1)',
+          topicos: [
+            {
+              subtitulo: 'Com consumo identificado',
+              texto:
+                'No dia [DATA], foi realizada a validação de consumo do cliente, com registro de utilização do produto "Consulta individual".',
+            },
+            {
+              subtitulo: 'Sem consumo identificado',
+              texto:
+                'No dia [DATA], foi realizada a validação de consumo do cliente, sendo identificado que não havia registro de utilização em nenhum produto. Enviado e-mail orientando o cliente a acessar a plataforma e realizar uma primeira consulta de teste.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Canais de atendimento (D+2)',
+          topicos: [
+            {
+              subtitulo: 'Envio de canais',
+              texto:
+                'Enviado e-mail dia [DATA] com as informações sobre canais de atendimento Lemit.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) 2º Chamado para Treinamento (D+3)',
+          topicos: [
+            {
+              subtitulo: 'Registro',
+              texto:
+                'Segunda chamada para treinamento realizada via WhatsApp, com o cliente, no dia [DATA]',
+            },
+            {
+              subtitulo: 'Mensagem WhatsApp',
+              texto:
+                'Olá, tudo bem?\nMe chamo Moisés e sou o responsável pela sua jornada de implantação aqui na Lemit.\n\nNotei que ainda não realizamos o treinamento. Vamos agendar?\n\nSe não for do seu interesse no momento, fique à vontade para me avisar.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) 3º chamado para treinamento (D+5)',
+          topicos: [
+            {
+              subtitulo: 'Registro',
+              texto:
+                'Terceiro acionamento realizado via WhatsApp dia [DATA] ao cliente, chamando para treinamento com especialistas.',
+            },
+            {
+              subtitulo: 'Mensagem WhatsApp',
+              texto:
+                'Olá, Tudo bem?\n\nPassando com um\n\n*último lembrete*\n\nsobre o treinamento. Sei que a agenda é corrida, mas ele faz bastante diferença na experiência e evita dúvidas no dia a dia. Para avançarmos, é só escolher o melhor horário pelo link:\n\nhttps://outlook.office.com/book/TreinamentoLemitBrasil@lemitti.com/s/B8RBANlQp0eU4VOAM5j45A2?ismsaljsauthenabled\n\nQualquer dúvida, me chama.',
+            },
+          ],
+        },
+        {
+          titulo: 'Treinamento',
+          topicos: [
+            {
+              subtitulo: 'Treinamento Agendado',
+              texto:
+                'Treinamento agendado para o dia [DATA], com participação de —. A aplicação do treinamento ficará under responsabilidade de Moisés',
+            },
+            {
+              subtitulo: 'Treinamento No-Show',
+              texto:
+                'Cliente não compareceu em sala de treinamento dia [DATA] às 14:00 conforme agendado. Enviado mensagem para reagendamento.',
+            },
+            {
+              subtitulo: 'Rechamada para treinamento (3 vezes)',
+              texto:
+                'Cliente acionado via whatsapp dia [DATA], chamando para treinamento com especialistas. Sem retorno.\n\nBoa tarde, —. Tudo bem?\n\nVi que o treinamento estava agendado, mas não conseguimos nos encontrar no horário combinado. Gostaria de reagendar?',
+            },
+            {
+              subtitulo: 'Treinamento onboarding realizado',
+              texto:
+                'O treinamento foi realizado via Teams no dia [DATA], às ___ h, com participação de —. A necessidade abordagem durante o treinamento foi [descrever necessidade]. Foi demonstrado o produto “—” e explicado sobre o processo de enriquecimento, consultas individuais e gerenciar. O link para avaliação de satisfação (CSAT) foi enviado após a reunião',
+            },
+            {
+              subtitulo: 'Rechamada genérica para treinamento',
+              texto:
+                'Cliente acionada via whatsapp dia [DATA], chamando para treinamento com especialistas. Sem retorno',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Acompanhamento de consumo 1 (D+10)',
+          topicos: [
+            {
+              subtitulo: 'Validação Mensal 1',
+              texto: 'Validação de consumo realizada dia [DATA].',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre Funcionalidades (D+15)',
+          topicos: [
+            {
+              subtitulo: 'Envio do Guia Rápido',
+              texto:
+                'Foi enviado e-mail em [DATA] apresentando as principais funcionalidades da plataforma. O cliente foi orientado sobre consultas individuais e enriquecimentos e recebeu o guia rápido anexo ao e-mail.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Acompanhamento de consumo 2 (D+20)',
+          topicos: [
+            {
+              subtitulo: 'Validação Mensal 2',
+              texto: 'Validação de consumo realizada dia [DATA].',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre Qualificação e score (D+25)',
+          topicos: [
+            {
+              subtitulo: 'Envio de Manual Técnico',
+              texto:
+                'Foi enviada comunicação por e-mail em [DATA] explicando o funcionamento da qualificação e score. O cliente recebeu instruções sobre uso e benefícios, além do manual de qualificação de score anexo ao e-mail.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre API (D+30)',
+          topicos: [
+            {
+              subtitulo: 'Instruções de Integração',
+              texto:
+                'No dia [DATA] foi enviado e-mail ao cliente com informações sobre integração via API. Incluindo como solicitar a integração ao nosso suporte.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre Relatórios (D+35)',
+          topicos: [
+            {
+              subtitulo: 'Recomendação de rotina',
+              texto:
+                'Em [DATA], o cliente recebeu e-mail recomendando os relatórios mais úteis para o dia-a-dia, sendo eles: Enriquecimentos por arquivo e consultas individuais.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre Portfólio Lemit Brasil (D+35)',
+          topicos: [
+            {
+              subtitulo: 'Apresentação Ecossistema',
+              texto:
+                'No dia [DATA], foi enviado e-mail ao cliente apresentando o portfólio do Grupo Lemit Brasil, com informações sobre a Lemit Dados, Kolmeya e Lemit Vox.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Acompanhamento de consumo (D+40)',
+          topicos: [
+            {
+              subtitulo: 'Monitoramento de Régua',
+              texto:
+                'No dia [DATA], foi enviado e-mail ao cliente apresentando o portfólio do Grupo Lemit Brasil, com informações sobre a Lemit Dados, Kolmeya e Lemit Vox.',
+            },
+          ],
+        },
+        {
+          titulo:
+            '(CS Moises) Reunião estratégica (D+40) - para clientes > R$500',
+          topicos: [
+            {
+              subtitulo: 'Convocação de Call',
+              texto:
+                'No dia [DATA], foi enviado e-mail ao cliente apresentando o portfólio do Grupo Lemit Brasil, com informações sobre a Lemit Dados, Kolmeya e Lemit Vox.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Conclusão do onboarding (D+45)',
+          topicos: [
+            {
+              subtitulo: 'Encerramento e CSAT',
+              texto:
+                'O onboarding foi concluído no dia [DATA], conforme comunicado por e-mail ao cliente. Enviado link para avaliação de satisfação (CSAT).',
+            },
+          ],
+        },
+      ];
+
+      const listaAtividadesPre = [
+        {
+          titulo: '(CS Moises) Boas-vindas',
+          topicos: [
+            {
+              subtitulo: 'Acesso Administrator',
+              texto:
+                'E-mail de boas vindas enviado dia [DATA] ao usuário administrador, informando sobre primeiro acesso e recarga.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Canais de atendimento D+1',
+          topicos: [
+            {
+              subtitulo: 'Envio Informativo',
+              texto:
+                'Enviado e-mail dia [DATA] com as informações sobre canais de atendimento Lemit.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Validação de acesso e recarga D+2',
+          topicos: [
+            {
+              subtitulo: '(CS Moisés) Primeiro acesso (D+2)',
+              texto:
+                'Cliente realizou uma recarga, porém ainda não acessou. Comunicação por HSM enviada dia [DATA], informando passo-a-passo para primeiro acesso.',
+            },
+            {
+              subtitulo: '(CS Moisés) Primeira recarga (D+2)',
+              texto:
+                'Cliente não realizou nenhuma recarga, comunicação por email enviada dia [DATA] informando o pix.',
+            },
+            {
+              subtitulo: 'Acessou e recarregou',
+              texto:
+                'Validação realizada dia [DATA], o cliente acessou ao sistema e realizou uma recarga',
+            },
+            {
+              subtitulo: 'E-mail de chamada para consumo',
+              texto:
+                'Prezado Gustavo,\n\nIdentificamos que sua conta já foi liberada, porém ainda não registramos a recarga necessária para iniciar a utilização da plataforma.\n\nGostaria de saber se existe alguma dúvida ou se podemos ajudá-lo em alguma etapa do processo.\n\nCaso ainda não tenha efetuado o pagamento, segue nossa chave PIX:\npix@lemitti.com\n\nSe precisar de qualquer apoio, basta responder a este e-mail. Nossa equipe estará à disposição para auxiliá-lo.',
+            },
+          ],
+        },
+        {
+          titulo: 'Webinar',
+          topicos: [
+            {
+              subtitulo: '(CS Moises) Convite para reunião',
+              texto:
+                'Foi enviada comunicação por HSM no dia [DATA] convidando o cliente para o plantão de dúvidas de onboarding.',
+            },
+            {
+              subtitulo: '(CS Moises) Rechamada para reunião',
+              texto:
+                'Foi enviado e-mail de rechamada para participar do plantão de dúvidas no dia [DATA]',
+            },
+            {
+              subtitulo: '(CS Moises) Reunião onboarding realizado',
+              texto:
+                'O plantão de dúvidas de onboarding foi realizado no dia [DATA], com participação de —. Foram apresentadas as funcionalidades principais da plataforma e esclarecidas dúvidas sobre [assunto, se houver].',
+            },
+            {
+              subtitulo: '(CS Moises) Reunião No-Show',
+              texto:
+                'Cliente não compareceu em sala de plantão de dúvidas dia [DATA] às 10:00 conforme agendado.\n\nCliente não compareceu em sala de plantão de dúvidas dia [DATA] às 14:00 conforme agendado.\n\nCliente não compareceu em sala de plantão de dúvidas dia [DATA] às 16:00 conforme agendado.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre Funcionalidades (D+05)',
+          topicos: [
+            {
+              subtitulo: 'Funcionalidades Base',
+              texto:
+                'Foi enviado e-mail em [DATA] apresentando as principais funcionalidades da plataforma. O cliente foi orientado sobre consultas individuais e enriquecimentos e recebeu o guia rápido anexo ao e-mail.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre qualificação e score (D+10)',
+          topicos: [
+            {
+              subtitulo: 'Qualificação Técnica',
+              texto:
+                'Foi enviada comunicação por e-mail em [DATA] explicando o funcionamento da qualificação e score. O cliente recebeu instruções sobre uso e benefícios, além do manual de qualificação de score anexo ao e-mail.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre API (D+20)',
+          topicos: [
+            {
+              subtitulo: 'Documentação de API',
+              texto:
+                'No dia [DATA] foi enviado e-mail ao cliente com informações sobre integration via API. Incluindo como solicitar a integração ao nosso suporte.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) E-mail sobre relatórios (D+30)',
+          topicos: [
+            {
+              subtitulo: 'Rotina de Relatórios',
+              texto:
+                'Em [DATA], o cliente recebeu e-mail recomendando os relatórios mais úteis para o dia-a-dia, sendo eles: Enriquecimentos por arquivo e consultas individuais.',
+            },
+          ],
+        },
+        {
+          titulo: '(CS Moises) Conclusão do onboarding (D+45)',
+          topicos: [
+            {
+              subtitulo: 'Fechamento de Régua',
+              texto:
+                'O onboarding foi concluído no dia [DATA], conforme comunicado por e-mail ao cliente. Enviado link para avaliação de satisfação (CSAT).',
+            },
+          ],
+        },
+      ];
+
+      function mudarPlano(tipo) {
+        planoAtual = tipo;
+        document
+          .getElementById('btnPos')
+          .classList.toggle('active', tipo === 'pos');
+        document
+          .getElementById('btnPre')
+          .classList.toggle('active', tipo === 'pre');
+        inicializarTela();
+      }
+
+      function obterDataDeHoje() {
+        const hoje = new Date();
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const ano = hoje.getFullYear();
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function toggleCard(cardElement) {
+        cardElement.classList.toggle('open');
+      }
+
+      function copiarTextoAtividade(btn, textoBase) {
+        const dataHoje = obterDataDeHoje();
+        const textoFinal = textoBase.replace(/\[DATA\]/g, dataHoje);
+        navigator.clipboard
+          .writeText(textoFinal)
+          .then(() => {
+            btn.classList.add('copied');
+            setTimeout(() => {
+              btn.classList.remove('copied');
+            }, 1200);
+          })
+          .catch((err) => console.error('Erro ao copiar: ', err));
+      }
+
+      function inicializarTela() {
+        const dataHoje = obterDataDeHoje();
+        document.getElementById(
+          'currentDateBadge'
+        ).textContent = `Hoje é: ${dataHoje}`;
+
+        const container = document.getElementById('cardsContainer');
+        container.innerHTML = '';
+
+        const listaAtividades =
+          planoAtual === 'pos' ? listaAtividadesPos : listaAtividadesPre;
+
+        listaAtividades.forEach((ativ, indexAtiv) => {
+          const card = document.createElement('div');
+          card.className = 'activity-card';
+
+          const header = document.createElement('div');
+          header.className = 'card-header';
+          header.onclick = function () {
+            toggleCard(card);
+          };
+          header.innerHTML = `
+                <span class="card-title">${ativ.titulo}</span>
+                <span class="card-toggle-icon">▼</span>
+            `;
+          card.appendChild(header);
+
+          const body = document.createElement('div');
+          body.className = 'card-body';
+
+          ativ.topicos.forEach((topico) => {
+            const topicContainer = document.createElement('div');
+            topicContainer.className = 'topic-container';
+
+            if (ativ.topicos.length > 1) {
+              const title = document.createElement('div');
+              title.className = 'topic-title';
+              title.textContent = `📌 ${topico.subtitulo}`;
+              topicContainer.appendChild(title);
+            }
+
+            const previewBox = document.createElement('div');
+            previewBox.className = 'text-preview-box';
+            previewBox.innerHTML = topico.texto.replace(
+              /\[DATA\]/g,
+              `<strong>${dataHoje}</strong>`
+            );
+            topicContainer.appendChild(previewBox);
+
+            const btn = document.createElement('button');
+            btn.className = 'btn-copy';
+            btn.onclick = function () {
+              copiarTextoAtividade(this, topico.texto);
+            };
+            btn.innerHTML = `📋 Copiar Registro <span class="tooltip-text">Texto Copiado!</span>`;
+            topicContainer.appendChild(btn);
+
+            body.appendChild(topicContainer);
+          });
+
+          card.appendChild(body);
+          container.appendChild(card);
+        });
+      }
+
+      window.onload = inicializarTela;
+    </script>
+    <script src="sidebar.js"></script>
+  </body>
+</html>

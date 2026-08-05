@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Acelera CS</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- SDK do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        background-color: #f1f2f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+        color: #1a1d24;
+      }
+
+      .auth-card {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        padding: 36px 32px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e4e6f1;
+      }
+
+      .brand-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .brand-icon {
+        width: 44px;
+        height: 44px;
+        background: #6226ef;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+      }
+
+      .brand-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1a1d24;
+        letter-spacing: -0.3px;
+      }
+
+      .brand-subtitle {
+        font-size: 0.85rem;
+        color: #727785;
+        margin-top: 4px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1a1d24;
+        margin-bottom: 6px;
+      }
+
+      input {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.2s;
+      }
+
+      input:focus {
+        border-color: #6226ef;
+        box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.1);
+      }
+
+      .btn-submit {
+        width: 100%;
+        background: #6226ef;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+        margin-top: 6px;
+        transition: background 0.2s;
+      }
+
+      .btn-submit:hover {
+        background: #4b18cb;
+      }
+
+      .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .auth-footer {
+        text-align: center;
+        margin-top: 24px;
+        font-size: 0.875rem;
+        color: #64748b;
+      }
+
+      .auth-footer a {
+        color: #6226ef;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .auth-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .alert-msg {
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.825rem;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .alert-danger {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-card">
+      <div class="brand-header">
+        <div class="brand-icon">𓅂</div>
+        <div class="brand-title">Acelera CS</div>
+        <div class="brand-subtitle">Entre com seus dados para continuar</div>
+      </div>
+
+      <div class="alert-msg alert-danger" id="errorAlert"></div>
+
+      <form id="loginForm" onsubmit="realizarLogin(event)">
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            required
+            placeholder="seu.nome@empresa.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            required
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          Acessar Painel
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Ainda não tem conta? <a href="cadastrar.html">Criar conta</a>
+      </div>
+    </div>
+
+    <script>
+      const SUPABASE_URL = 'https://pgsjhesbgqcqilkxfzed.supabase.co';
+      const SUPABASE_ANON_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnc2poZXNiZ3FjcWlsa3hmemVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNjkwMjQsImV4cCI6MjEwMDc0NTAyNH0.YmZ41BDMU_cafyTOInh-R4aSotvXnnWXCuPqorsfxqg';
+      const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Se já estiver logado, manda direto para a página principal
+      window.addEventListener('DOMContentLoaded', async () => {
+        const {
+          data: { session },
+        } = await _supabase.auth.getSession();
+        if (session) {
+          window.location.href = 'index.html';
+        }
+      });
+
+      async function realizarLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        const alertBox = document.getElementById('errorAlert');
+
+        alertBox.style.display = 'none';
+        btn.disabled = true;
+        btn.innerText = 'Entrando...';
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const { data, error } = await _supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          alertBox.innerText = 'Falha no login: ' + traduzirErro(error.message);
+          alertBox.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = 'Acessar Painel';
+        } else {
+          // Login bem sucedido -> Redireciona para o index
+          window.location.href = 'index.html';
+        }
+      }
+
+      function traduzirErro(msg) {
+        if (msg.includes('Invalid login credentials'))
+          return 'E-mail ou senha incorretos.';
+        if (msg.includes('Email not confirmed'))
+          return 'E-mail ainda não confirmado.';
+        return msg;
+      }
+    </script>
+  </body>
+</html>

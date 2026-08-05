@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Treinamentos - Acelera CS</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+      }
+      body {
+        background-color: #f1f2f7;
+        display: flex;
+        min-height: 100vh;
+        color: #1a1d24;
+      }
+      
+      /* --- CONTEÚDO PRINCIPAL --- */
+      .main-content {
+        margin-left: 250px;
+        flex: 1;
+        width: calc(100% - 250px);
+        padding: 40px 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .container {
+        width: 100%;
+        max-width: 900px;
+      }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+      }
+      .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .page-title {
+        color: #1a1d24;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .subtitle {
+        color: #9499a6;
+        font-size: 0.95rem;
+        margin-top: 4px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      /* --- BOTÕES --- */
+      .btn-primary {
+        padding: 12px 20px;
+        background-color: #6226ef;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-primary:hover {
+        background-color: #4e1cd1;
+      }
+      .btn-secondary {
+        padding: 12px 20px;
+        background-color: #ffffff;
+        color: #1a1d24;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-secondary:hover {
+        background-color: #f8f7ff;
+        border-color: #6226ef;
+        color: #6226ef;
+      }
+      .btn-danger {
+        padding: 12px 20px;
+        background-color: #ef4444;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-danger:hover {
+        background-color: #dc2626;
+      }
+      .btn-export {
+        padding: 12px 20px;
+        background-color: #6226ef;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn-export:hover {
+        background-color: #4e1cd1;
+      }
+      .btn-outline {
+        padding: 10px 16px;
+        background: transparent;
+        border: 1px dashed #6226ef;
+        color: #6226ef;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+      .btn-outline:hover {
+        background: #f3f0ff;
+      }
+      /* --- CARDS & FORMULÁRIOS --- */
+      .card {
+        background: #ffffff;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid #e4e6f1;
+        margin-bottom: 24px;
+      }
+      .card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #6226ef;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group.full-width {
+        grid-column: span 2;
+      }
+      label {
+        margin-bottom: 8px;
+        color: #1a1d24;
+        font-weight: 600;
+        font-size: 0.88rem;
+      }
+      input[type='text'],
+      input[type='date'],
+      input[type='number'],
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: #1a1d24;
+        outline: none;
+        background: #ffffff;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #6226ef;
+        box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.15);
+      }
+      /* --- CHECKBOX / TOGGLE POTENCIAL KOLMEYA --- */
+      .kolmeya-toggle {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #ffffff;
+        user-select: none;
+      }
+      .kolmeya-toggle.active {
+        background: #f3f0ff;
+        border-color: #6226ef;
+        color: #6226ef;
+      }
+      .kolmeya-toggle input[type='checkbox'] {
+        width: 20px;
+        height: 20px;
+        accent-color: #6226ef;
+        cursor: pointer;
+      }
+      .kolmeya-toggle-label {
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      /* --- BADGES DE STATUS --- */
+      .badge-kolmeya {
+        background: #f3f0ff;
+        color: #6226ef;
+        border: 1px solid #e2d9ff;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: inline-block;
+      }
+      /* --- NAV FIXA / QUICK JUMP PARAS SEÇÕES --- */
+      .section-nav-sticky {
+        position: sticky;
+        top: 20px;
+        z-index: 90;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid #e4e6f1;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      }
+      .nav-anchor-btn {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        background: transparent;
+        color: #9499a6;
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+      }
+      .nav-anchor-btn:hover,
+      .nav-anchor-btn.active {
+        background: #f3f0ff;
+        color: #6226ef;
+      }
+      /* --- TABELA --- */
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+      .data-table th {
+        background-color: #fafafc;
+        color: #1a1d24;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e4e6f1;
+      }
+      .data-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f2f7;
+        font-size: 0.92rem;
+      }
+      .badge-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .badge-pre {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .badge-progress {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .badge-done {
+        background: #d4edda;
+        color: #155724;
+      }
+      .dynamic-item {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .btn-remove {
+        background: #fee2e2;
+        color: #ef4444;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        padding: 0 14px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+      }
+      .btn-remove:hover {
+        background: #ef4444;
+        color: #ffffff;
+      }
+      /* --- CARD DE RESUMO --- */
+      .summary-card {
+        background: #ffffff;
+        border: 1px solid #e4e6f1;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .summary-item {
+        background: #fafafc;
+        border: 1px solid #f1f2f7;
+        padding: 14px 16px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .summary-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #9499a6;
+      }
+      .summary-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a1d24;
+      }
+      .summary-section {
+        background: #fafafc;
+        border: 1px solid #f1f2f7;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+      }
+      .summary-section:last-child {
+        margin-bottom: 0;
+      }
+      .summary-section-title {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #9499a6;
+        margin-bottom: 10px;
+      }
+      .destaques-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill-destaque {
+        background: #f3f0ff;
+        color: #6226ef;
+        border: 1px solid #e2d9ff;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pill-destaque::before {
+        content: '•';
+        font-size: 1.2rem;
+        line-height: 0;
+      }
+      /* TOAST NOTIFICATION */
+      .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #10b981;
+        color: white;
+        padding: 14px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="sidebar-container"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- 1. DASHBOARD DE TREINAMENTOS -->
+      <div class="container" id="viewDashboard">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Treinamentos e Onboarding</h2>
+            <p class="subtitle">
+              Faça o pré-cadastro ou continue a jornada de treinamento do
+              cliente.
+            </p>
+          </div>
+          <button class="btn-primary" onclick="abrirPreCadastro()">
+            + Novo Pré-Cadastro
+          </button>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Agendado Por</th>
+                <th>Data Treinamento</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaTreinamentos"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. FORMULÁRIO DE PRÉ-CADASTRO / EDIÇÃO -->
+      <div class="container hidden" id="viewPreCadastro">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" id="tituloFormPreCadastro">
+              Pré-Cadastro para Treinamento
+            </h2>
+            <p class="subtitle">
+              Registre ou edite as informações prévias do agendamento.
+            </p>
+          </div>
+          <button class="btn-secondary" onclick="voltarDashboard()">
+            Cancelar
+          </button>
+        </div>
+        <div class="card">
+          <form id="formPreCadastro" onsubmit="salvarPreCadastro(event)">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Nome da Empresa *</label>
+                <input
+                  type="text"
+                  id="preNomeEmpresa"
+                  required
+                  placeholder="Ex: Tech Solutions"
+                />
+              </div>
+              <div class="form-group">
+                <label>Quem Agendou? *</label>
+                <input
+                  type="text"
+                  id="preQuemAgendou"
+                  required
+                  placeholder="Ex: SDR / Executivo"
+                />
+              </div>
+              <div class="form-group">
+                <label>Data do Treinamento *</label>
+                <input type="date" id="preDataTreinamento" required />
+              </div>
+
+              <!-- NOVO CAMPO SOLICITADO: TIPO DE PLANO -->
+              <div class="form-group">
+                <label>Tipo de Plano / Pagamento *</label>
+                <select id="preTipoPagamento" required>
+                  <option value="Pré-pago">Pré-pago</option>
+                  <option value="Pós-pago">Pós-pago</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label
+                  >Já realiza ou realizou consultas em alguma plataforma?</label
+                >
+                <select
+                  id="preRealizouConsulta"
+                  onchange="togglePlataformaAnterior()"
+                >
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+              <div class="form-group hidden" id="groupPlataformaAnterior">
+                <label>Qual plataforma já usa ou usou?</label>
+                <input
+                  type="text"
+                  id="prePlataformaAnterior"
+                  placeholder="Ex: Serasa, Neoway, Neofact, etc."
+                />
+              </div>
+              <div class="form-group">
+                <label>Já cadastrou usuário?</label>
+                <select id="preCadastrouUsuario">
+                  <option value="Não">Não</option>
+                  <option value="Sim">Sim</option>
+                </select>
+              </div>
+
+              <!-- CAMPO: POTENCIAL KOLMEYA -->
+              <div class="form-group full-width">
+                <label>Classificação Especial</label>
+                <div
+                  class="kolmeya-toggle"
+                  id="toggleKolmeyaBox"
+                  onclick="alternarKolmeya()"
+                >
+                  <input
+                    type="checkbox"
+                    id="prePotencialKolmeya"
+                    onclick="event.stopPropagation(); sincronizarKolmeya();"
+                  />
+                  <span class="kolmeya-toggle-label">⚡ Potencial Kolmeya</span>
+                </div>
+              </div>
+              <div class="form-group full-width" style="margin-top: 10px">
+                <label
+                  >Pontos de Destaque para Apresentação
+                  <span
+                    style="font-weight: 400; color: #9499a6; font-size: 0.8rem"
+                    >(Pressione Enter para adicionar mais)</span
+                  ></label
+                >
+                <div id="listaDestaquesContainer">
+                  <div class="dynamic-item">
+                    <input
+                      type="text"
+                      class="input-destaque"
+                      placeholder="Ex: Focar no módulo de relatórios"
+                      onkeydown="tratarEnterDynamic(event, this, adicionarCampoDestaque)"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn-outline"
+                  onclick="adicionarCampoDestaque()"
+                >
+                  + Adicionar Destaque
+                </button>
+              </div>
+              <div class="form-group full-width">
+                <label>Observações Prévias</label>
+                <textarea
+                  id="preObservacoes"
+                  rows="3"
+                  placeholder="Notas sobre a conta ou exigências especificas..."
+                ></textarea>
+              </div>
+            </div>
+            <div style="margin-top: 24px; text-align: right">
+              <button type="submit" class="btn-primary">
+                Salvar Informações
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 3. JORNADA CONTINUA DO TREINAMENTO -->
+      <div class="container hidden" id="viewJornada">
+        <div class="page-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <h2 class="page-title" id="jornadaNomeEmpresa">
+                Jornada de Treinamento
+              </h2>
+              <span id="badgeKolmeyaJornada" class="badge-kolmeya hidden"
+                >⚡ Potencial Kolmeya</span
+              >
+            </div>
+            <p class="subtitle">
+              Conduza o treinamento e registre os detalhes da conta em uma única
+              tela contínua.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-export" onclick="copiarInformacoesClipboard()">
+              Copiar
+            </button>
+            <button class="btn-secondary" onclick="editarTreinamentoAtual()">
+              Editar
+            </button>
+            <button class="btn-danger" onclick="excluirTreinamentoAtual()">
+              Excluir
+            </button>
+            <button
+              class="btn-secondary"
+              onclick="voltarDashboard()"
+              style="margin-left: 10px"
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+
+        <!-- BARRA DE NAVEGAÇÃO RÁPIDA (ANCORAS) -->
+        <div class="section-nav-sticky">
+          <button
+            class="nav-anchor-btn active"
+            onclick="scrollToSection('secaoAlinhamento')"
+          >
+            1. Resumo & Alinhamento
+          </button>
+          <button
+            class="nav-anchor-btn"
+            onclick="scrollToSection('secaoMapeamento')"
+          >
+            2. Mapeamento de Perfil
+          </button>
+          <button
+            class="nav-anchor-btn"
+            onclick="scrollToSection('secaoFechamento')"
+          >
+            3. Fechamento & Produtos
+          </button>
+        </div>
+
+        <!-- SEÇÃO 1: ALINHAMENTO INICIAL & RESUMO -->
+        <section id="secaoAlinhamento" class="card">
+          <div class="card-title">
+            <span>📋</span> 1. Alinhamento Inicial & Resumo do Pré-Cadastro
+          </div>
+          <div class="summary-card">
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="summary-label">Agendado por</span>
+                <span class="summary-value" id="viewAgendadoPor">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Data do Treinamento</span>
+                <span class="summary-value" id="viewDataTreinamento">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Tipo de Plano</span>
+                <span class="summary-value" id="viewTipoPagamento">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label"
+                  >Já usa/usou Plataforma de dados?</span
+                >
+                <span class="summary-value" id="viewConsulta">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Cadastrou Usuário</span>
+                <span class="summary-value" id="viewUsuario">-</span>
+              </div>
+            </div>
+            <div class="summary-section">
+              <div class="summary-section-title">
+                Pontos de Destaque Mapeados
+              </div>
+              <div class="destaques-pills" id="viewListaDestaques"></div>
+            </div>
+            <div class="summary-section">
+              <div class="summary-section-title">Observações Prévias</div>
+              <p
+                id="viewObservacoesPrevias"
+                style="color: #334155; font-size: 0.92rem; line-height: 1.5"
+              >
+                -
+              </p>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>Participantes Presentes na Reunião</label>
+            <input
+              type="text"
+              id="jornadaParticipantes"
+              placeholder="Ex: João (Diretor), Maria (Analista)"
+              onchange="salvarProgressoJornada()"
+            />
+          </div>
+        </section>
+
+        <!-- SEÇÃO 2: MAPEAMENTO & PERFIL -->
+        <section id="secaoMapeamento" class="card">
+          <div class="card-title">
+            <span>🎯</span> 2. Mapeamento & Perfil do Cliente
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Segmento de Mercado</label>
+              <select id="jornadaSegmento" onchange="salvarProgressoJornada()">
+                <option value="">Selecione...</option>
+                <option value="Financeiro">Financeiro / Cobrança</option>
+                <option value="Varejo">Varejo / E-commerce</option>
+                <option value="Telecom">Telecom / Tecnologia</option>
+                <option value="Logística">Logística / Transporte</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Porte da Empresa</label>
+              <select id="jornadaPorte" onchange="salvarProgressoJornada()">
+                <option value="">Selecione...</option>
+                <option value="Pequeno">Pequeno (1-10 funcionários)</option>
+                <option value="Médio">Médio (11-50 funcionários)</option>
+                <option value="Grande">Grande (50+ funcionários)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Funcionalidade Prioritária</label>
+              <select
+                id="jornadaFuncionalidade"
+                onchange="salvarProgressoJornada()"
+              >
+                <option value="">Selecione...</option>
+                <option value="Consulta Individual">Consulta Individual</option>
+                <option value="Enriquecimento Massivo">
+                  Enriquecimento Massivo (Lote)
+                </option>
+                <option value="API / Integração">API / Integração</option>
+                <option value="Ambas">Ambas</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Estimativa de Volume / Uso Mensal</label>
+              <input
+                type="number"
+                id="jornadaVolume"
+                placeholder="Ex: 5000"
+                onchange="salvarProgressoJornada()"
+              />
+            </div>
+            <div class="form-group full-width">
+              <label>Quais informações o cliente TEM na base dele?</label>
+              <textarea
+                id="jornadaInfoTemNaBase"
+                rows="2"
+                placeholder="Ex: Nome, CPF, Telefone antigo, E-mail..."
+                onchange="salvarProgressoJornada()"
+              ></textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Quais informações o cliente QUER TER / enriquecer?</label>
+              <textarea
+                id="jornadaInfoQuerTer"
+                rows="2"
+                placeholder="Ex: Telefone atualizado, Endereço, Renda presumida, Score..."
+                onchange="salvarProgressoJornada()"
+              ></textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Dúvidas Marcantes / Dificuldades Apresentadas</label>
+              <textarea
+                id="jornadaDuvidas"
+                rows="3"
+                placeholder="Anote as principais dúvidas levantadas durante o treinamento..."
+                onchange="salvarProgressoJornada()"
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- SEÇÃO 3: FECHAMENTO & PRODUTOS APRESENTADOS -->
+        <section id="secaoFechamento" class="card">
+          <div class="card-title">
+            <span>🚀</span> 3. Fechamento & Produtos Apresentados
+          </div>
+          <div class="form-group full-width" style="margin-bottom: 20px">
+            <label
+              >Produtos / Módulos Apresentados
+              <span style="font-weight: 400; color: #9499a6; font-size: 0.8rem"
+                >(Pressione Enter para adicionar mais)</span
+              ></label
+            >
+            <div id="listaProdutosApresentadosContainer">
+              <div class="dynamic-item">
+                <input
+                  type="text"
+                  class="input-produto"
+                  placeholder="Ex: Enriquecimento de Dados, Módulo Veicular..."
+                  onkeydown="tratarEnterDynamic(event, this, adicionarCampoProduto)"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn-outline"
+              onclick="adicionarCampoProduto()"
+            >
+              + Adicionar Produto
+            </button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Engajamento do Cliente</label>
+              <select
+                id="jornadaEngajamento"
+                onchange="salvarProgressoJornada()"
+              >
+                <option value="Alto">
+                  Alto (Participativo / Pronto para usar)
+                </option>
+                <option value="Médio">
+                  Médio (Compreendeu, mas precisa praticar)
+                </option>
+                <option value="Baixo">
+                  Baixo (Com dificuldades / Pouco interesse)
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Necessita de Re-treinamento / Follow-up?</label>
+              <select id="jornadaFollowUp" onchange="salvarProgressoJornada()">
+                <option value="Não">Não - Treinamento Finalizado</option>
+                <option value="Sim">Sim - Agendar Novo Encontro</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Resumo Final / Anotações do CS</label>
+              <textarea
+                id="jornadaAnotacoesFinais"
+                rows="4"
+                placeholder="Sua percepção final da conta, combinado de ações futuras..."
+                onchange="salvarProgressoJornada()"
+              ></textarea>
+            </div>
+          </div>
+          <div
+            style="
+              margin-top: 32px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <button class="btn-secondary" onclick="voltarDashboard()">
+              Voltar ao Dashboard
+            </button>
+            <button class="btn-primary" onclick="finalizarJornada()">
+              Finalizar e Concluir Treinamento
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotification" class="toast hidden">
+      <span>✅ Informações copiadas para a área de transferência!</span>
+    </div>
+
+    <script>
+      let clientes = [];
+      let clienteAtualId = null;
+
+      function carregarDadosDoStorage() {
+        const dadosSalvos = localStorage.getItem('acelera_cs_treinamentos');
+        if (dadosSalvos) {
+          try {
+            clientes = JSON.parse(dadosSalvos);
+          } catch (e) {
+            console.error('Erro ao ler dados do localStorage:', e);
+            clientes = [];
+          }
+        }
+      }
+
+      function salvarDadosNoStorage() {
+        localStorage.setItem(
+          'acelera_cs_treinamentos',
+          JSON.stringify(clientes)
+        );
+      }
+
+      function alternarTela(idTela) {
+        document.getElementById('viewDashboard').classList.add('hidden');
+        document.getElementById('viewPreCadastro').classList.add('hidden');
+        document.getElementById('viewJornada').classList.add('hidden');
+        document.getElementById(idTela).classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function scrollToSection(idSecao) {
+        const el = document.getElementById(idSecao);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function voltarDashboard() {
+        clienteAtualId = null;
+        renderizarTabela();
+        alternarTela('viewDashboard');
+      }
+
+      /* --- MANIPULAÇÃO DO FORMULÁRIO DE PRÉ-CADASTRO --- */
+      function abrirPreCadastro() {
+        clienteAtualId = null;
+        document.getElementById('tituloFormPreCadastro').innerText =
+          'Pré-Cadastro para Treinamento';
+        document.getElementById('formPreCadastro').reset();
+        document.getElementById('preTipoPagamento').value = 'Pré-pago';
+
+        // Reset container de destaques
+        const container = document.getElementById('listaDestaquesContainer');
+        container.innerHTML = `
+          <div class="dynamic-item">
+            <input type="text" class="input-destaque" placeholder="Ex: Focar no módulo de relatórios" onkeydown="tratarEnterDynamic(event, this, adicionarCampoDestaque)" />
+          </div>
+        `;
+
+        document
+          .getElementById('groupPlataformaAnterior')
+          .classList.add('hidden');
+
+        const box = document.getElementById('toggleKolmeyaBox');
+        box.classList.remove('active');
+        document.getElementById('prePotencialKolmeya').checked = false;
+
+        alternarTela('viewPreCadastro');
+      }
+
+      function togglePlataformaAnterior() {
+        const val = document.getElementById('preRealizouConsulta').value;
+        const grp = document.getElementById('groupPlataformaAnterior');
+        if (val === 'Sim') {
+          grp.classList.remove('hidden');
+        } else {
+          grp.classList.add('hidden');
+        }
+      }
+
+      function alternarKolmeya() {
+        const chk = document.getElementById('prePotencialKolmeya');
+        chk.checked = !chk.checked;
+        sincronizarKolmeya();
+      }
+
+      function sincronizarKolmeya() {
+        const chk = document.getElementById('prePotencialKolmeya');
+        const box = document.getElementById('toggleKolmeyaBox');
+        if (chk.checked) {
+          box.classList.add('active');
+        } else {
+          box.classList.remove('active');
+        }
+      }
+
+      function adicionarCampoDestaque(valor = '') {
+        const container = document.getElementById('listaDestaquesContainer');
+        const div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.innerHTML = `
+          <input type="text" class="input-destaque" value="${valor}" placeholder="Adicione outro ponto relevante..." onkeydown="tratarEnterDynamic(event, this, adicionarCampoDestaque)" />
+          <button type="button" class="btn-remove" onclick="removerCampoDynamic(this)">×</button>
+        `;
+        container.appendChild(div);
+        if (!valor) {
+          div.querySelector('input').focus();
+        }
+      }
+
+      function adicionarCampoProduto(valor = '') {
+        const container = document.getElementById(
+          'listaProdutosApresentadosContainer'
+        );
+        const div = document.createElement('div');
+        div.className = 'dynamic-item';
+        div.innerHTML = `
+          <input type="text" class="input-produto" value="${valor}" placeholder="Ex: API de Risco, Enriquecimento..." onkeydown="tratarEnterDynamic(event, this, adicionarCampoProduto)" />
+          <button type="button" class="btn-remove" onclick="removerCampoDynamic(this)">×</button>
+        `;
+        container.appendChild(div);
+        if (!valor) {
+          div.querySelector('input').focus();
+        }
+        salvarProgressoJornada();
+      }
+
+      function removerCampoDynamic(btn) {
+        const item = btn.parentElement;
+        const container = item.parentElement;
+        if (container.children.length > 1) {
+          item.remove();
+        } else {
+          const input = item.querySelector('input');
+          if (input) input.value = '';
+        }
+        salvarProgressoJornada();
+      }
+
+      function tratarEnterDynamic(e, input, funcAdicionar) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (input.value.trim() !== '') {
+            funcAdicionar();
+          }
+        }
+      }
+
+      function obterValoresDynamic(selectorClass) {
+        const inputs = document.querySelectorAll(selectorClass);
+        const lista = [];
+        inputs.forEach((inp) => {
+          if (inp.value.trim() !== '') {
+            lista.push(inp.value.trim());
+          }
+        });
+        return lista;
+      }
+
+      function salvarPreCadastro(event) {
+        event.preventDefault();
+
+        const nome = document.getElementById('preNomeEmpresa').value.trim();
+        const quemAgendou = document
+          .getElementById('preQuemAgendou')
+          .value.trim();
+        const dataTreinamento =
+          document.getElementById('preDataTreinamento').value;
+        const tipoPagamento = document.getElementById('preTipoPagamento').value;
+        const realizouConsulta = document.getElementById(
+          'preRealizouConsulta'
+        ).value;
+        const plataformaAnterior =
+          realizouConsulta === 'Sim'
+            ? document.getElementById('prePlataformaAnterior').value.trim()
+            : 'Não utiliza/utilizou';
+        const cadastrouUsuario = document.getElementById(
+          'preCadastrouUsuario'
+        ).value;
+        const potencialKolmeya = document.getElementById(
+          'prePotencialKolmeya'
+        ).checked;
+        const destaques = obterValoresDynamic('.input-destaque');
+        const observacoes = document
+          .getElementById('preObservacoes')
+          .value.trim();
+
+        if (clienteAtualId) {
+          const idx = clientes.findIndex((c) => c.id === clienteAtualId);
+          if (idx !== -1) {
+            clientes[idx] = {
+              ...clientes[idx],
+              nome,
+              quemAgendou,
+              dataTreinamento,
+              tipoPagamento,
+              realizouConsulta,
+              plataformaAnterior,
+              cadastrouUsuario,
+              potencialKolmeya,
+              destaques,
+              observacoes,
+            };
+          }
+        } else {
+          const novoCliente = {
+            id: Date.now().toString(),
+            nome,
+            quemAgendou,
+            dataTreinamento,
+            tipoPagamento,
+            realizouConsulta,
+            plataformaAnterior,
+            cadastrouUsuario,
+            potencialKolmeya,
+            destaques,
+            observacoes,
+            status: 'Pré-Cadastro',
+
+            // Campos de Jornada
+            participantes: '',
+            segmento: '',
+            porte: '',
+            funcionalidade: '',
+            volume: '',
+            infoTemNaBase: '',
+            infoQuerTer: '',
+            duvidas: '',
+            produtosApresentados: [],
+            engajamento: 'Alto',
+            followUp: 'Não',
+            anotacoesFinais: '',
+          };
+          clientes.push(novoCliente);
+        }
+
+        salvarDadosNoStorage();
+        voltarDashboard();
+      }
+
+      /* --- DASHBOARD E TABELA --- */
+      function renderizarTabela() {
+        const tbody = document.getElementById('tabelaTreinamentos');
+        tbody.innerHTML = '';
+
+        if (clientes.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; color: #9499a6; padding: 30px;">
+                Nenhum treinamento cadastrado até o momento.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        // Ordenar por data
+        clientes.sort(
+          (a, b) => new Date(a.dataTreinamento) - new Date(b.dataTreinamento)
+        );
+
+        clientes.forEach((cliente) => {
+          const tr = document.createElement('tr');
+
+          let badgeStatusClass = 'badge-pre';
+          if (cliente.status === 'Em Andamento')
+            badgeStatusClass = 'badge-progress';
+          if (cliente.status === 'Concluído') badgeStatusClass = 'badge-done';
+
+          const dataFmt = cliente.dataTreinamento
+            ? cliente.dataTreinamento.split('-').reverse().join('/')
+            : '-';
+
+          tr.innerHTML = `
+            <td>
+              <strong style="color: #1a1d24;">${cliente.nome}</strong>
+              ${
+                cliente.potencialKolmeya
+                  ? '<span class="badge-kolmeya" style="margin-left: 6px;">⚡ Kolmeya</span>'
+                  : ''
+              }
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Plano: ${
+                cliente.tipoPagamento || 'Não informado'
+              }</div>
+            </td>
+            <td>${cliente.quemAgendou}</td>
+            <td>${dataFmt}</td>
+            <td><span class="badge-status ${badgeStatusClass}">${
+            cliente.status
+          }</span></td>
+            <td>
+              <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="abrirJornada('${
+                cliente.id
+              }')">
+                Abrir Jornada
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* --- CARREGAR E GERENCIAR JORNADA --- */
+      function abrirJornada(id) {
+        clienteAtualId = id;
+        const cliente = clientes.find((c) => c.id === id);
+        if (!cliente) return;
+
+        // Se o status for pré-cadastro, marca como em andamento ao abrir a jornada
+        if (cliente.status === 'Pré-Cadastro') {
+          cliente.status = 'Em Andamento';
+          salvarDadosNoStorage();
+        }
+
+        // Cabeçalho
+        document.getElementById('jornadaNomeEmpresa').innerText = cliente.nome;
+        const badgeK = document.getElementById('badgeKolmeyaJornada');
+        if (cliente.potencialKolmeya) {
+          badgeK.classList.remove('hidden');
+        } else {
+          badgeK.classList.add('hidden');
+        }
+
+        // Preencher resumo
+        document.getElementById('viewAgendadoPor').innerText =
+          cliente.quemAgendou || '-';
+        document.getElementById('viewDataTreinamento').innerText =
+          cliente.dataTreinamento
+            ? cliente.dataTreinamento.split('-').reverse().join('/')
+            : '-';
+        document.getElementById('viewTipoPagamento').innerText =
+          cliente.tipoPagamento || 'Não informado';
+        document.getElementById('viewConsulta').innerText =
+          cliente.realizouConsulta === 'Sim'
+            ? `Sim (${cliente.plataformaAnterior})`
+            : 'Não';
+        document.getElementById('viewUsuario').innerText =
+          cliente.cadastrouUsuario || '-';
+        document.getElementById('viewObservacoesPrevias').innerText =
+          cliente.observacoes || 'Sem observações prévias.';
+
+        // Destaques Pills
+        const containerDestaques =
+          document.getElementById('viewListaDestaques');
+        containerDestaques.innerHTML = '';
+        if (cliente.destaques && cliente.destaques.length > 0) {
+          cliente.destaques.forEach((d) => {
+            const pill = document.createElement('span');
+            pill.className = 'pill-destaque';
+            pill.innerText = d;
+            containerDestaques.appendChild(pill);
+          });
+        } else {
+          containerDestaques.innerHTML =
+            '<span style="color: #9499a6; font-size: 0.85rem;">Nenhum destaque registrado.</span>';
+        }
+
+        // Preencher Seção 1
+        document.getElementById('jornadaParticipantes').value =
+          cliente.participantes || '';
+
+        // Preencher Seção 2
+        document.getElementById('jornadaSegmento').value =
+          cliente.segmento || '';
+        document.getElementById('jornadaPorte').value = cliente.porte || '';
+        document.getElementById('jornadaFuncionalidade').value =
+          cliente.funcionalidade || '';
+        document.getElementById('jornadaVolume').value = cliente.volume || '';
+        document.getElementById('jornadaInfoTemNaBase').value =
+          cliente.infoTemNaBase || '';
+        document.getElementById('jornadaInfoQuerTer').value =
+          cliente.infoQuerTer || '';
+        document.getElementById('jornadaDuvidas').value = cliente.duvidas || '';
+
+        // Preencher Seção 3 (Produtos Apresentados)
+        const containerProd = document.getElementById(
+          'listaProdutosApresentadosContainer'
+        );
+        containerProd.innerHTML = '';
+        if (
+          cliente.produtosApresentados &&
+          cliente.produtosApresentados.length > 0
+        ) {
+          cliente.produtosApresentados.forEach((p) => {
+            adicionarCampoProduto(p);
+          });
+        } else {
+          adicionarCampoProduto('');
+        }
+
+        document.getElementById('jornadaEngajamento').value =
+          cliente.engajamento || 'Alto';
+        document.getElementById('jornadaFollowUp').value =
+          cliente.followUp || 'Não';
+        document.getElementById('jornadaAnotacoesFinais').value =
+          cliente.anotacoesFinais || '';
+
+        alternarTela('viewJornada');
+      }
+
+      function salvarProgressoJornada() {
+        if (!clienteAtualId) return;
+        const idx = clientes.findIndex((c) => c.id === clienteAtualId);
+        if (idx === -1) return;
+
+        clientes[idx].participantes = document
+          .getElementById('jornadaParticipantes')
+          .value.trim();
+        clientes[idx].segmento =
+          document.getElementById('jornadaSegmento').value;
+        clientes[idx].porte = document.getElementById('jornadaPorte').value;
+        clientes[idx].funcionalidade = document.getElementById(
+          'jornadaFuncionalidade'
+        ).value;
+        clientes[idx].volume = document.getElementById('jornadaVolume').value;
+        clientes[idx].infoTemNaBase = document
+          .getElementById('jornadaInfoTemNaBase')
+          .value.trim();
+        clientes[idx].infoQuerTer = document
+          .getElementById('jornadaInfoQuerTer')
+          .value.trim();
+        clientes[idx].duvidas = document
+          .getElementById('jornadaDuvidas')
+          .value.trim();
+        clientes[idx].produtosApresentados =
+          obterValoresDynamic('.input-produto');
+        clientes[idx].engajamento =
+          document.getElementById('jornadaEngajamento').value;
+        clientes[idx].followUp =
+          document.getElementById('jornadaFollowUp').value;
+        clientes[idx].anotacoesFinais = document
+          .getElementById('jornadaAnotacoesFinais')
+          .value.trim();
+
+        salvarDadosNoStorage();
+      }
+
+      function finalizarJornada() {
+        salvarProgressoJornada();
+        if (clienteAtualId) {
+          const idx = clientes.findIndex((c) => c.id === clienteAtualId);
+          if (idx !== -1) {
+            clientes[idx].status = 'Concluído';
+            salvarDadosNoStorage();
+          }
+        }
+        voltarDashboard();
+      }
+
+      function editarTreinamentoAtual() {
+        if (!clienteAtualId) return;
+        const cliente = clientes.find((c) => c.id === clienteAtualId);
+        if (!cliente) return;
+
+        document.getElementById('tituloFormPreCadastro').innerText =
+          'Editar Pré-Cadastro do Treinamento';
+        document.getElementById('preNomeEmpresa').value = cliente.nome || '';
+        document.getElementById('preQuemAgendou').value =
+          cliente.quemAgendou || '';
+        document.getElementById('preDataTreinamento').value =
+          cliente.dataTreinamento || '';
+        document.getElementById('preTipoPagamento').value =
+          cliente.tipoPagamento || 'Pré-pago';
+        document.getElementById('preRealizouConsulta').value =
+          cliente.realizouConsulta || 'Não';
+        togglePlataformaAnterior();
+        document.getElementById('prePlataformaAnterior').value =
+          cliente.plataformaAnterior !== 'Não utiliza/utilizou'
+            ? cliente.plataformaAnterior
+            : '';
+        document.getElementById('preCadastrouUsuario').value =
+          cliente.cadastrouUsuario || 'Não';
+
+        // Kolmeya
+        document.getElementById('prePotencialKolmeya').checked =
+          !!cliente.potencialKolmeya;
+        sincronizarKolmeya();
+
+        // Destaques
+        const container = document.getElementById('listaDestaquesContainer');
+        container.innerHTML = '';
+        if (cliente.destaques && cliente.destaques.length > 0) {
+          cliente.destaques.forEach((d) => adicionarCampoDestaque(d));
+        } else {
+          adicionarCampoDestaque('');
+        }
+
+        document.getElementById('preObservacoes').value =
+          cliente.observacoes || '';
+
+        alternarTela('viewPreCadastro');
+      }
+
+      function excluirTreinamentoAtual() {
+        if (!clienteAtualId) return;
+        if (confirm('Tem certeza de que deseja excluir este treinamento?')) {
+          clientes = clientes.filter((c) => c.id !== clienteAtualId);
+          salvarDadosNoStorage();
+          voltarDashboard();
+        }
+      }
+
+      /* --- COPIAR PARA CLIPBOARD --- */
+      function copiarInformacoesClipboard() {
+        if (!clienteAtualId) return;
+        const cliente = clientes.find((c) => c.id === clienteAtualId);
+        if (!cliente) return;
+
+        salvarProgressoJornada();
+
+        const dataFmt = cliente.dataTreinamento
+          ? cliente.dataTreinamento.split('-').reverse().join('/')
+          : 'Não informada';
+        const destaquesTexto =
+          cliente.destaques && cliente.destaques.length > 0
+            ? cliente.destaques.map((d) => `  • ${d}`).join('\n')
+            : '  Nenhum registrado';
+        const produtosTexto =
+          cliente.produtosApresentados &&
+          cliente.produtosApresentados.length > 0
+            ? cliente.produtosApresentados.map((p) => `  • ${p}`).join('\n')
+            : '  Nenhum registrado';
+
+        const textoRelatorio = `
+📌 RESUMO DO TREINAMENTO & JORNADA DO CLIENTE
+
+🏢 Empresa: ${cliente.nome} ${
+          cliente.potencialKolmeya ? '[⚡ POTENCIAL KOLMEYA]' : ''
+        }
+👤 Agendado por: ${cliente.quemAgendou || '-'}
+📅 Data: ${dataFmt}
+💳 Tipo de Plano: ${cliente.tipoPagamento || 'Não informado'}
+👥 Participantes: ${cliente.participantes || 'Não informados'}
+
+--------------------------------------------------
+1. INFORMAÇÕES DE PRÉ-CADASTRO
+--------------------------------------------------
+• Já usa/usou plataforma? ${
+          cliente.realizouConsulta === 'Sim'
+            ? `Sim (${cliente.plataformaAnterior})`
+            : 'Não'
+        }
+• Cadastrou usuário? ${cliente.cadastrouUsuario || 'Não'}
+• Observações Prévias: ${cliente.observacoes || 'Nenhuma'}
+
+Destaques Mapeados:
+${destaquesTexto}
+
+--------------------------------------------------
+2. MAPEAMENTO DE PERFIL
+--------------------------------------------------
+• Segmento: ${cliente.segmento || 'Não informado'}
+• Porte: ${cliente.porte || 'Não informado'}
+• Funcionalidade Prioritária: ${cliente.funcionalidade || 'Não informada'}
+• Volume Estimado: ${cliente.volume || 'Não informado'}
+• Informações que TEM na base: ${cliente.infoTemNaBase || 'Não informado'}
+• Informações que QUER TER/Enriquecer: ${cliente.infoQuerTer || 'Não informado'}
+• Dúvidas/Dificuldades: ${cliente.duvidas || 'Nenhuma'}
+
+--------------------------------------------------
+3. FECHAMENTO & PRODUTOS
+--------------------------------------------------
+Produtos/Módulos Apresentados:
+${produtosTexto}
+
+• Engajamento: ${cliente.engajamento || 'Não informado'}
+• Necessita Follow-Up? ${cliente.followUp || 'Não'}
+• Resumo Final / Notas do CS: ${
+          cliente.anotacoesFinais || 'Sem anotações finais'
+        }
+        `.trim();
+
+        navigator.clipboard
+          .writeText(textoRelatorio)
+          .then(() => {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+              toast.classList.add('hidden');
+            }, 3000);
+          })
+          .catch((err) => {
+            console.error('Erro ao copiar para a área de transferência:', err);
+          });
+      }
+
+      /* INICIALIZAÇÃO DA PÁGINA */
+      window.addEventListener('DOMContentLoaded', () => {
+        carregarDadosDoStorage();
+        renderizarTabela();
+      });
+    </script>
+    <script src="sidebar.js"></script>
+  </body>
+</html>

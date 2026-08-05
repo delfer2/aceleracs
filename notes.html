@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotações e Post-its - Acelera CS</title>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: #f1f2f7;
+            display: flex;
+            min-height: 100vh;
+            color: #1a1d24;
+        }
+        /* --- CONTEÚDO PRINCIPAL --- */
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            width: calc(100% - 250px);
+            padding: 40px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        .page-title {
+            color: #1a1d24;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            color: #9499a6;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background-color: #6226ef;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(98, 38, 239, 0.2);
+        }
+        .btn-primary:hover {
+            background-color: #4919be;
+            transform: translateY(-1px);
+        }
+        /* --- BARRA DE PESQUISA E FILTROS --- */
+        .filter-bar {
+            background: #ffffff;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: 1px solid #e4e6f1;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .search-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+            color: #1a1d24;
+        }
+        .search-input:focus {
+            border-color: #6226ef;
+            box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.15);
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9499a6;
+            font-size: 1.1rem;
+        }
+        .hashtags-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #727785;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+        .tag-badge {
+            background: #f1f2f7;
+            color: #6226ef;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            border: 1px solid transparent;
+        }
+        .tag-badge:hover {
+            background: #e2d9ff;
+        }
+        .tag-badge.active {
+            background: #6226ef;
+            color: #ffffff;
+        }
+        /* --- SEÇÕES DE CARDS --- */
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #727785;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 20px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        /* --- CARDS (POST-IT) --- */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e4e6f1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+        }
+        .card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+        .card.pinned {
+            border: 1.5px solid #6226ef;
+            background: #ffffff;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1a1d24;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .pin-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+            transition: color 0.2s;
+            padding: 2px;
+            line-height: 1;
+        }
+        .pin-btn:hover {
+            color: #6226ef;
+        }
+        .card.pinned .pin-btn {
+            color: #6226ef;
+        }
+        /* CAMPO DESTAQUE NO CARD */
+        .card-applies-to {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #6226ef;
+            background: #f8f7ff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: inline-block;
+            border: 1px solid #e2d9ff;
+        }
+        .card-body {
+            font-size: 0.9rem;
+            color: #444957;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-body a {
+            color: #6226ef;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .card-tag {
+            background: #f3f0ff;
+            color: #6226ef;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f2f7;
+            padding-top: 12px;
+            margin-top: auto;
+        }
+        .card-date {
+            font-size: 0.75rem;
+            color: #9499a6;
+        }
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+        /* BOTOES SEM EMOJI */
+        .action-text-btn {
+            background: none;
+            border: none;
+            color: #727785;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 4px;
+            transition: all 0.2s;
+        }
+        .action-text-btn:hover {
+            color: #6226ef;
+            text-decoration: underline;
+        }
+        .action-text-btn.delete:hover {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+        /* --- MODAIS --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 29, 36, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal {
+            background: #ffffff;
+            width: 100%;
+            max-width: 520px;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: translateY(20px);
+            transition: transform 0.2s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a1d24;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: #9499a6;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #1a1d24;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #1a1d24;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            border-color: #6226ef;
+            box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.15);
+        }
+        textarea.form-control {
+            min-height: 110px;
+            resize: vertical;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-secondary {
+            background: #f1f2f7;
+            color: #727785;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background: #e4e6f1;
+            color: #1a1d24;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9499a6;
+            font-size: 0.95rem;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px dashed #cbd5e1;
+            grid-column: 1 / -1;
+        }
+        /* ESTILOS DO MODAL DE DETALHES */
+        .view-applies {
+            background: #f8f7ff;
+            border: 1px solid #e2d9ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            color: #6226ef;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .view-body {
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 20px;
+        }
+        .view-body a {
+            color: #6226ef;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .view-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f2f7;
+            padding-top: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar-container"></div>
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+        <div class="container">
+            <div class="header-top">
+                <div>
+                    <h2 class="page-title">Anotações</h2>
+                    <p class="subtitle">Crie post-its com links, textos e hashtags organizadas.</p>
+                </div>
+                <button class="btn-primary" onclick="abrirModal()">
+                    <span>+</span> Nova Anotação
+                </button>
+            </div>
+            <!-- BUSCA E TAGS -->
+            <div class="filter-bar">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                        </svg>
+                    </span>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar por título, destaque, conteúdo ou #hashtag..." oninput="filtrarNotas()">
+                </div>
+                <div class="hashtags-filter" id="hashtagsBar">
+                    <span class="filter-label">Hashtags:</span>
+                    <span class="tag-badge active" onclick="filtrarPorTag('todas', this)">#todas</span>
+                </div>
+            </div>
+            <!-- SEÇÃO FIXADOS -->
+            <div id="pinnedSection" style="display: none;">
+                <div class="section-title">📌 FIXADOS NO TOPO</div>
+                <div class="cards-grid" id="pinnedGrid"></div>
+            </div>
+            <!-- SEÇÃO OUTRAS ANOTAÇÕES -->
+            <div>
+                <div class="section-title" id="otherSectionTitle">TODAS AS ANOTAÇÕES</div>
+                <div class="cards-grid" id="otherGrid"></div>
+            </div>
+        </div>
+    </main>
+    <!-- MODAL DE CRIAÇÃO / EDIÇÃO -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitleText">Nova Anotação</h3>
+                <button class="close-modal" onclick="fecharModal()">&times;</button>
+            </div>
+            <form id="noteForm" onsubmit="salvarNota(event)">
+                <input type="hidden" id="noteId">
+                <div class="form-group">
+                    <label for="noteTitle">Título da Anotação</label>
+                    <input type="text" id="noteTitle" class="form-control" placeholder="Ex: Link do Dashboard do Cliente" required>
+                </div>
+                <div class="form-group">
+                    <label for="noteAppliesTo">Destaque</label>
+                    <input type="text" id="noteAppliesTo" class="form-control" placeholder="Ex: Informação prioritária / Observação importante">
+                </div>
+                <div class="form-group">
+                    <label for="noteBody">Corpo da Anotação / Links</label>
+                    <textarea id="noteBody" class="form-control" placeholder="Escreva os detalhes ou cole URLs (ex: https://site.com)..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="noteTags">Hashtags (separadas por vírgula ou espaço)</label>
+                    <input type="text" id="noteTags" class="form-control" placeholder="Ex: #onboarding, #link, #importante">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Anotação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- MODAL DE VISUALIZAÇÃO DA NOTA -->
+    <div class="modal-overlay" id="viewModalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="viewNoteTitle">Detalhes da Anotação</h3>
+                <button class="close-modal" onclick="fecharViewModal()">&times;</button>
+            </div>
+            <div id="viewNoteApplies" class="view-applies" style="display: none;"></div>
+            <div class="view-body" id="viewNoteBody"></div>
+            <div class="card-tags" id="viewNoteTags"></div>
+            <div class="view-meta">
+                <span class="card-date" id="viewNoteDate"></span>
+                <button class="btn-primary" id="viewEditBtn">Editar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ESTADO DA APLICAÇÃO
+        let notas = [];
+        let tagSelecionada = 'todas';
+
+        // INICIALIZAÇÃO COM SUPABASE
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarNotasDoSupabase();
+        });
+
+        // LEITURA (READ) DO SUPABASE
+        async function carregarNotasDoSupabase() {
+            try {
+                // Assumindo que a instância do Supabase é inicializada via `auth.js` ou globalmente como `supabase`
+                const { data, error } = await _supabase
+                    .from('notas')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data) {
+                    // Mapeia os dados do banco garantindo a formatação adequada dos campos
+                    notas = data.map(item => ({
+                        id: item.id,
+                        titulo: item.titulo || '',
+                        quandoAplica: item.quandoAplica || '',
+                        corpo: item.corpo || '',
+                        tags: Array.isArray(item.tags) ? item.tags : (item.tags ? item.tags.split(',') : []),
+                        fixado: !!item.fixado,
+                        data: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
+                    }));
+                }
+            } catch (err) {
+                console.error('Erro ao carregar anotações do Supabase:', err);
+            } finally {
+                renderizarNotas();
+            }
+        }
+
+        // SEGURANÇA CONTRA XSS
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        // RENDERIZAÇÃO
+        function renderizarNotas() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const pinnedGrid = document.getElementById('pinnedGrid');
+            const otherGrid = document.getElementById('otherGrid');
+            const pinnedSection = document.getElementById('pinnedSection');
+            pinnedGrid.innerHTML = '';
+            otherGrid.innerHTML = '';
+
+            // Filtragem
+            let notasFiltradas = notas.filter(nota => {
+                const quando = nota.quandoAplica ? nota.quandoAplica.toLowerCase() : '';
+                const bateTexto = nota.titulo.toLowerCase().includes(searchVal) || 
+                                  quando.includes(searchVal) ||
+                                  nota.corpo.toLowerCase().includes(searchVal) ||
+                                  nota.tags.some(t => t.toLowerCase().includes(searchVal));
+                
+                const bateTag = tagSelecionada === 'todas' || nota.tags.includes(tagSelecionada);
+                return bateTexto && bateTag;
+            });
+
+            const fixadas = notasFiltradas.filter(n => n.fixado);
+            const outras = notasFiltradas.filter(n => !n.fixado);
+
+            // Renderizar Fixadas
+            if (fixadas.length > 0) {
+                pinnedSection.style.display = 'block';
+                fixadas.forEach(nota => pinnedGrid.appendChild(criarCardElement(nota)));
+            } else {
+                pinnedSection.style.display = 'none';
+            }
+
+            // Renderizar Outras
+            if (outras.length > 0) {
+                outras.forEach(nota => otherGrid.appendChild(criarCardElement(nota)));
+            } else if (fixadas.length === 0) {
+                otherGrid.innerHTML = `<div class="empty-state">Nenhuma anotação encontrada. Clique em "+ Nova Anotação" para criar!</div>`;
+            }
+
+            atualizarBarraHashtags();
+        }
+
+        // FORMATAR TEXTO COM LINKS
+        function formatarTextoComLinks(texto) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return texto.replace(urlRegex, function(url) {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${url}</a>`;
+            });
+        }
+
+        // CRIAR ELEMENTO DO CARD
+        function criarCardElement(nota) {
+            const card = document.createElement('div');
+            card.className = `card ${nota.fixado ? 'pinned' : ''}`;
+            
+            card.onclick = () => abrirViewModal(nota.id);
+            const tagsHTML = nota.tags.map(t => `<span class="card-tag">${escapeHTML(t)}</span>`).join('');
+            const corpoFormatado = formatarTextoComLinks(escapeHTML(nota.corpo));
+            const aplicaHTML = nota.quandoAplica ? `<div class="card-applies-to">Destaque: ${escapeHTML(nota.quandoAplica)}</div>` : '';
+
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <h3 class="card-title">${escapeHTML(nota.titulo)}</h3>
+                        <button class="pin-btn" onclick="event.stopPropagation(); toggleFixar(${nota.id})" title="${nota.fixado ? 'Desafixar' : 'Fixar no topo'}">
+                            📌
+                        </button>
+                    </div>
+                    ${aplicaHTML}
+                    <div class="card-body">${corpoFormatado}</div>
+                </div>
+                <div>
+                    <div class="card-tags">${tagsHTML}</div>
+                    <div class="card-footer">
+                        <span class="card-date">${nota.data}</span>
+                        <div class="card-actions">
+                            <button class="action-text-btn" onclick="event.stopPropagation(); editarNota(${nota.id})">Editar</button>
+                            <button class="action-text-btn delete" onclick="event.stopPropagation(); deletarNota(${nota.id})">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // ATUALIZAR FILTRO DE HASHTAGS DINÂMICAS
+        function atualizarBarraHashtags() {
+            const hashtagsBar = document.getElementById('hashtagsBar');
+            const todasTagsSet = new Set();
+            
+            notas.forEach(n => {
+                if (Array.isArray(n.tags)) {
+                    n.tags.forEach(t => todasTagsSet.add(t));
+                }
+            });
+
+            let html = `<span class="filter-label">Hashtags:</span>`;
+            html += `<span class="tag-badge ${tagSelecionada === 'todas' ? 'active' : ''}" onclick="filtrarPorTag('todas', this)">#todas</span>`;
+            todasTagsSet.forEach(tag => {
+                const isActive = tagSelecionada === tag ? 'active' : '';
+                html += `<span class="tag-badge ${isActive}" onclick="filtrarPorTag('${escapeHTML(tag)}', this)">${escapeHTML(tag)}</span>`;
+            });
+            hashtagsBar.innerHTML = html;
+        }
+
+        function filtrarPorTag(tag, element) {
+            tagSelecionada = tag;
+            renderizarNotas();
+        }
+
+        function filtrarNotas() {
+            renderizarNotas();
+        }
+
+        // MANIPULAÇÃO DE NOTAS (CRUD + SUPABASE)
+        async function toggleFixar(id) {
+            const nota = notas.find(n => n.id === id);
+            if (!nota) return;
+
+            const novoStatus = !nota.fixado;
+
+            try {
+                const { error } = await supabase
+                    .from('notas')
+                    .update({ fixado: novoStatus })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                nota.fixado = novoStatus;
+                renderizarNotas();
+            } catch (err) {
+                console.error('Erro ao atualizar status de fixado:', err);
+            }
+        }
+
+        async function salvarNota(e) {
+            e.preventDefault();
+            const id = document.getElementById('noteId').value;
+            const titulo = document.getElementById('noteTitle').value.trim();
+            const quandoAplica = document.getElementById('noteAppliesTo').value.trim();
+            const corpo = document.getElementById('noteBody').value.trim();
+            const rawTags = document.getElementById('noteTags').value.trim();
+
+            let tags = [];
+            if (rawTags) {
+                tags = rawTags.split(/[\s,]+/).map(t => {
+                    t = t.trim();
+                    if (!t) return null;
+                    return t.startsWith('#') ? t : `#${t}`;
+                }).filter(Boolean);
+            }
+
+            try {
+                if (id) {
+                    // Editar existente (UPDATE)
+                    const { error } = await _supabase
+                        .from('notas')
+                        .update({
+                            titulo,
+                            quandoAplica,
+                            corpo,
+                            tags
+                        })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } else {
+                    // Criar nova (INSERT)
+                    const { error } = await _supabase
+                        .from('notas')
+                        .insert([{
+                            titulo,
+                            quandoAplica,
+                            corpo,
+                            tags,
+                            fixado: false
+                        }]);
+
+                    if (error) throw error;
+                }
+
+                await carregarNotasDoSupabase();
+                fecharModal();
+            } catch (err) {
+                console.error('Erro ao salvar anotação:', err);
+            }
+        }
+
+        function editarNota(id) {
+            const nota = notas.find(n => n.id === id);
+            if (!nota) return;
+            document.getElementById('noteId').value = nota.id;
+            document.getElementById('noteTitle').value = nota.titulo;
+            document.getElementById('noteAppliesTo').value = nota.quandoAplica || '';
+            document.getElementById('noteBody').value = nota.corpo;
+            document.getElementById('noteTags').value = nota.tags ? nota.tags.join(', ') : '';
+            
+            document.getElementById('modalTitleText').innerText = "Editar Anotação";
+            fecharViewModal();
+            abrirModal();
+        }
+
+        async function deletarNota(id) {
+            if (confirm("Tem certeza que deseja excluir esta anotação?")) {
+                try {
+                    const { error } = await _supabase
+                        .from('notas')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    await carregarNotasDoSupabase();
+                } catch (err) {
+                    console.error('Erro ao excluir anotação:', err);
+                }
+            }
+        }
+
+        // CONTROLE DOS MODAIS
+        function abrirModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('noteForm').reset();
+            document.getElementById('noteId').value = '';
+            document.getElementById('modalTitleText').innerText = "Nova Anotação";
+        }
+
+        function abrirViewModal(id) {
+            const nota = notas.find(n => n.id === id);
+            if (!nota) return;
+            document.getElementById('viewNoteTitle').innerText = nota.titulo;
+            
+            const appliesEl = document.getElementById('viewNoteApplies');
+            if (nota.quandoAplica) {
+                appliesEl.innerText = `Destaque: ${nota.quandoAplica}`;
+                appliesEl.style.display = 'block';
+            } else {
+                appliesEl.style.display = 'none';
+            }
+            document.getElementById('viewNoteBody').innerHTML = formatarTextoComLinks(escapeHTML(nota.corpo));
+            document.getElementById('viewNoteTags').innerHTML = nota.tags.map(t => `<span class="card-tag">${escapeHTML(t)}</span>`).join('');
+            document.getElementById('viewNoteDate').innerText = `Criado em: ${nota.data}`;
+            
+            const editBtn = document.getElementById('viewEditBtn');
+            editBtn.onclick = () => editarNota(nota.id);
+            document.getElementById('viewModalOverlay').classList.add('active');
+        }
+
+        function fecharViewModal() {
+            document.getElementById('viewModalOverlay').classList.remove('active');
+        }
+    </script>
+    <script src="sidebar.js"></script>
+</body>
+</html>
