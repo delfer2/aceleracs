@@ -28,8 +28,11 @@ document.addEventListener('DOMContentLoaded', function () {
     <aside class="sidebar" id="mainSidebar">
       <div class="sidebar-top">
         <div class="sidebar-brand">
-          <div class="brand-icon">🛵</div>
-          Acelera CS
+          <div class="brand-icon">
+            <img src="assets/logo/logo_aceleraCS.png" alt="Logo Acelera CS" class="brand-logo">
+          </div>
+          <!-- Texto envolvido em uma classe para receber a cor do logo -->
+          <span class="brand-text">Acelera CS</span>
           <button class="btn-toggle-sidebar" id="btnToggleSidebar" title="Fechar Menu">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -152,7 +155,6 @@ function injetarEstilosSidebar() {
     }
 
     .sidebar-brand {
-      color: #1a1d24;
       font-size: 1.2rem;
       font-weight: 700;
       letter-spacing: -0.3px;
@@ -165,16 +167,23 @@ function injetarEstilosSidebar() {
     }
 
     .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: #6226ef;
-      border-radius: 10px;
+      width: 36px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 1.1rem;
+      overflow: hidden;
+    }
+
+    .brand-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Classe adicionada para colorir o texto da marca com o tom do logo */
+    .brand-text {
+      color: #6226ef;
     }
 
     .btn-toggle-sidebar {
@@ -295,14 +304,14 @@ function injetarEstilosSidebar() {
     .avatar {
       width: 36px;
       height: 36px;
-      background: #e2d9ff;
-      color: #6226ef;
+      background: #f1f2f7;
+      color: #1a1d24;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     .user-info {
@@ -311,14 +320,14 @@ function injetarEstilosSidebar() {
     }
 
     .user-name {
-      font-size: 0.85rem;
-      font-weight: 700;
       color: #1a1d24;
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     .user-role {
-      font-size: 0.75rem;
       color: #9499a6;
+      font-size: 0.75rem;
     }
 
     .btn-logout {
@@ -326,8 +335,8 @@ function injetarEstilosSidebar() {
       border: none;
       color: #9499a6;
       cursor: pointer;
-      padding: 8px;
-      border-radius: 8px;
+      padding: 6px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -335,99 +344,9 @@ function injetarEstilosSidebar() {
     }
 
     .btn-logout:hover {
-      background-color: #fee2e2;
-      color: #ef4444;
-    }
-
-    /* Main content com sidebar expandido */
-    .main-content {
-      margin-left: 250px;
-      flex: 1;
-      width: calc(100% - 250px);
-      padding: 40px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: all 0.3s ease;
-    }
-
-    .main-expanded {
-      margin-left: 0;
-      width: 100%;
-    }
-
-    /* Responsivo */
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-250px);
-        width: 250px;
-        padding: 24px 16px;
-        border-right: 1px solid #e4e6f1;
-      }
-
-      .sidebar:not(.sidebar-collapsed) {
-        transform: translateX(0);
-        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-      }
-
-      .sidebar-collapsed {
-        transform: translateX(-250px);
-        width: 0;
-        padding: 0;
-        overflow: hidden;
-        border-right: none;
-      }
-
-      .btn-open-sidebar {
-        display: flex !important;
-      }
-
-      .main-content {
-        margin-left: 0;
-        width: 100%;
-        padding: 20px;
-      }
-
-      .main-expanded {
-        margin-left: 0;
-        width: 100%;
-      }
+      background: #fff0f0;
+      color: #ea4335;
     }
   `;
   document.head.appendChild(style);
-}
-
-// Função de encerramento da sessão
-async function fazerLogout(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  const confirmou = confirm('Deseja realmente sair da conta?');
-  if (!confirmou) return;
-
-  try {
-    const client =
-      (typeof supabaseClient !== 'undefined' && supabaseClient) ||
-      (typeof supabase !== 'undefined' && supabase) ||
-      window.supabaseClient ||
-      window.supabase;
-
-    if (client && client.auth) {
-      const { error } = await client.auth.signOut();
-      if (error) {
-        console.error('Erro ao encerrar sessão no Supabase:', error.message);
-      }
-    } else {
-      console.warn('Cliente Supabase não encontrado no escopo global.');
-    }
-
-    localStorage.clear();
-    sessionStorage.clear();
-  } catch (err) {
-    console.error('Exceção durante o logout:', err);
-  } finally {
-    window.location.href = 'login.html';
-  }
 }
