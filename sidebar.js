@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Mapeamento das opções do menu
   const menuItems = [
-    { href: 'index.html', label: 'Calcular datas' },
+    { href: 'index.html', label: 'Solicitações' },
+    { href: 'calcular.html', label: 'Calcular datas' },
     { href: 'atividades.html', label: 'Atividades' },
     { href: 'reminders.html', label: 'Lembretes' },
     { href: 'onboarding.html', label: 'Treinamentos' },
@@ -24,11 +25,17 @@ document.addEventListener('DOMContentLoaded', function () {
     .join('');
 
   sidebarContainer.innerHTML = `
-    <aside class="sidebar">
+    <aside class="sidebar" id="mainSidebar">
       <div class="sidebar-top">
         <div class="sidebar-brand">
           <div class="brand-icon">🛵</div>
           Acelera CS
+          <button class="btn-toggle-sidebar" id="btnToggleSidebar" title="Fechar Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div class="divider"></div>
         <nav class="sidebar-menu">
@@ -55,8 +62,57 @@ document.addEventListener('DOMContentLoaded', function () {
     </aside>
   `;
 
+  // Botão para abrir o menu (quando fechado)
+  const btnOpenSidebar = document.createElement('button');
+  btnOpenSidebar.className = 'btn-open-sidebar';
+  btnOpenSidebar.id = 'btnOpenSidebar';
+  btnOpenSidebar.title = 'Abrir Menu';
+  btnOpenSidebar.innerHTML = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  `;
+  document.body.appendChild(btnOpenSidebar);
+
   injetarEstilosSidebar();
+  configurarToggleSidebar();
 });
+
+// Configura o toggle do sidebar
+function configurarToggleSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const btnToggle = document.getElementById('btnToggleSidebar');
+  const btnOpen = document.getElementById('btnOpenSidebar');
+  const mainContent = document.querySelector('.main-content');
+
+  if (!sidebar || !btnToggle || !btnOpen) return;
+
+  // Verifica se o estado do sidebar está salvo
+  const sidebarFechado = localStorage.getItem('sidebarFechado') === 'true';
+  if (sidebarFechado) {
+    sidebar.classList.add('sidebar-collapsed');
+    if (mainContent) mainContent.classList.add('main-expanded');
+    btnOpen.style.display = 'flex';
+  }
+
+  // Fechar sidebar
+  btnToggle.addEventListener('click', function () {
+    sidebar.classList.add('sidebar-collapsed');
+    if (mainContent) mainContent.classList.add('main-expanded');
+    btnOpen.style.display = 'flex';
+    localStorage.setItem('sidebarFechado', 'true');
+  });
+
+  // Abrir sidebar
+  btnOpen.addEventListener('click', function () {
+    sidebar.classList.remove('sidebar-collapsed');
+    if (mainContent) mainContent.classList.remove('main-expanded');
+    btnOpen.style.display = 'none';
+    localStorage.setItem('sidebarFechado', 'false');
+  });
+}
 
 // Injeta os estilos CSS do Sidebar
 function injetarEstilosSidebar() {
@@ -78,6 +134,15 @@ function injetarEstilosSidebar() {
       z-index: 100;
       justify-content: space-between;
       border-right: 1px solid #e4e6f1;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-collapsed {
+      transform: translateX(-250px);
+      width: 0;
+      padding: 0;
+      overflow: hidden;
+      border-right: none;
     }
 
     .sidebar-top {
@@ -96,6 +161,7 @@ function injetarEstilosSidebar() {
       gap: 12px;
       margin-bottom: 24px;
       padding-left: 8px;
+      position: relative;
     }
 
     .brand-icon {
@@ -109,6 +175,25 @@ function injetarEstilosSidebar() {
       color: white;
       font-weight: bold;
       font-size: 1.1rem;
+    }
+
+    .btn-toggle-sidebar {
+      background: transparent;
+      border: none;
+      color: #9499a6;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin-left: auto;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: #f1f2f7;
+      color: #1a1d24;
     }
 
     .divider {
@@ -159,6 +244,37 @@ function injetarEstilosSidebar() {
       width: 4px;
       background: #6226ef;
       border-radius: 0 4px 4px 0;
+    }
+
+    /* Botão para abrir o menu */
+    .btn-open-sidebar {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 40px;
+      height: 40px;
+      background: #ffffff;
+      border: 1px solid #e4e6f1;
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 99;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      transition: all 0.2s ease;
+      color: #1a1d24;
+    }
+
+    .btn-open-sidebar:hover {
+      background: #f8f7ff;
+      border-color: #6226ef;
+      color: #6226ef;
+    }
+
+    .btn-open-sidebar svg {
+      width: 20px;
+      height: 20px;
     }
 
     /* Rodapé do Perfil e Botão Sair */
@@ -222,13 +338,67 @@ function injetarEstilosSidebar() {
       background-color: #fee2e2;
       color: #ef4444;
     }
+
+    /* Main content com sidebar expandido */
+    .main-content {
+      margin-left: 250px;
+      flex: 1;
+      width: calc(100% - 250px);
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .main-expanded {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-250px);
+        width: 250px;
+        padding: 24px 16px;
+        border-right: 1px solid #e4e6f1;
+      }
+
+      .sidebar:not(.sidebar-collapsed) {
+        transform: translateX(0);
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar-collapsed {
+        transform: translateX(-250px);
+        width: 0;
+        padding: 0;
+        overflow: hidden;
+        border-right: none;
+      }
+
+      .btn-open-sidebar {
+        display: flex !important;
+      }
+
+      .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .main-expanded {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
   `;
   document.head.appendChild(style);
 }
 
-// Função de encerramento da sessão com tratamento assíncrono correto
+// Função de encerramento da sessão
 async function fazerLogout(event) {
-  // Impede que a página recarregue antes da conclusão do logout
   if (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -238,7 +408,6 @@ async function fazerLogout(event) {
   if (!confirmou) return;
 
   try {
-    // Identifica o cliente do Supabase em variações de variáveis globais
     const client =
       (typeof supabaseClient !== 'undefined' && supabaseClient) ||
       (typeof supabase !== 'undefined' && supabase) ||
@@ -254,13 +423,11 @@ async function fazerLogout(event) {
       console.warn('Cliente Supabase não encontrado no escopo global.');
     }
 
-    // Limpa dados em cache local
     localStorage.clear();
     sessionStorage.clear();
   } catch (err) {
     console.error('Exceção durante o logout:', err);
   } finally {
-    // Redireciona de forma garantida para a tela de login
     window.location.href = 'login.html';
   }
 }
