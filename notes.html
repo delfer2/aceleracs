@@ -6,6 +6,8 @@
     <title>Anotações e Post-its - Acelera CS</title>
     <!-- Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <style>
@@ -70,6 +72,24 @@
         .btn-primary:hover {
             background-color: #4919be;
             transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #f1f2f7;
+            color: #727785;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background: #e4e6f1;
+            color: #1a1d24;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
         }
         /* --- BARRA DE PESQUISA E FILTROS --- */
         .filter-bar {
@@ -141,6 +161,47 @@
             background: #6226ef;
             color: #ffffff;
         }
+        /* --- TABS --- */
+        .tabs-container {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #ffffff;
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid #e4e6f1;
+        }
+        .tab-btn {
+            padding: 10px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #9499a6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover {
+            color: #6226ef;
+            background: #f8f7ff;
+        }
+        .tab-btn.active {
+            color: #6226ef;
+            background: #f3f0ff;
+        }
+        .tab-btn i {
+            font-size: 0.9rem;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
         /* --- SEÇÕES DE CARDS --- */
         .section-title {
             font-size: 0.85rem;
@@ -181,6 +242,9 @@
             border: 1.5px solid #6226ef;
             background: #ffffff;
         }
+        .card.favorited {
+            border: 1.5px solid #f59e0b;
+        }
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -194,22 +258,37 @@
             color: #1a1d24;
             line-height: 1.3;
             word-break: break-word;
+            flex: 1;
         }
-        .pin-btn {
+        .card-actions-header {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .action-icon-btn {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.1rem;
-            color: #cbd5e1;
-            transition: color 0.2s;
-            padding: 2px;
+            padding: 4px;
             line-height: 1;
+            transition: all 0.2s ease;
+            color: #cbd5e1;
+            font-size: 0.95rem;
         }
-        .pin-btn:hover {
+        .action-icon-btn:hover {
             color: #6226ef;
         }
-        .card.pinned .pin-btn {
+        .action-icon-btn.fav-active {
+            color: #f59e0b;
+        }
+        .action-icon-btn.fav-active:hover {
+            color: #d97706;
+        }
+        .action-icon-btn.pin-active {
             color: #6226ef;
+        }
+        .action-icon-btn.pin-active:hover {
+            color: #4919be;
         }
         /* CAMPO DESTAQUE NO CARD */
         .card-applies-to {
@@ -270,7 +349,6 @@
             display: flex;
             gap: 12px;
         }
-        /* BOTOES SEM EMOJI */
         .action-text-btn {
             background: none;
             border: none;
@@ -371,25 +449,155 @@
             min-height: 110px;
             resize: vertical;
         }
+        /* Tags input com menu dropdown */
+        .tags-input-container {
+            position: relative;
+        }
+        .tags-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tags-input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #1a1d24;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .tags-input:focus {
+            border-color: #6226ef;
+            box-shadow: 0 0 0 3px rgba(98, 38, 239, 0.15);
+        }
+        .tags-dropdown-btn {
+            padding: 12px 16px;
+            background: #f1f2f7;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #1a1d24;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .tags-dropdown-btn:hover {
+            background: #e4e6f1;
+        }
+        .tags-dropdown-btn i {
+            font-size: 0.85rem;
+            color: #9499a6;
+        }
+        .tags-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e4e6f1;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .tags-dropdown.show {
+            display: block;
+        }
+        .tag-dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.15s;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f1f2f7;
+        }
+        .tag-dropdown-item:last-child {
+            border-bottom: none;
+        }
+        .tag-dropdown-item:hover {
+            background: #f8f7ff;
+        }
+        .tag-dropdown-item .tag-check {
+            color: #6226ef;
+            font-weight: 600;
+            width: 20px;
+        }
+        .tag-dropdown-item.selected {
+            background: #f3f0ff;
+        }
+        .tag-dropdown-item .tag-select-indicator {
+            margin-left: auto;
+            color: #6226ef;
+            font-weight: 700;
+        }
+        .tag-dropdown-divider {
+            height: 1px;
+            background: #e4e6f1;
+            margin: 4px 0;
+        }
+        .tag-dropdown-add {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.15s;
+            font-size: 0.9rem;
+            color: #6226ef;
+            font-weight: 600;
+            border-top: 1px solid #e4e6f1;
+        }
+        .tag-dropdown-add:hover {
+            background: #f8f7ff;
+        }
+        .tag-dropdown-add i {
+            font-size: 0.85rem;
+        }
+        .selected-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 8px;
+            border: 1px dashed #e4e6f1;
+            border-radius: 8px;
+            min-height: 40px;
+            background: #fafafa;
+        }
+        .selected-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f3f0ff;
+            color: #6226ef;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .selected-tag .remove-tag {
+            cursor: pointer;
+            font-weight: 700;
+            color: #9499a6;
+            margin-left: 4px;
+            font-size: 0.9rem;
+        }
+        .selected-tag .remove-tag:hover {
+            color: #dc2626;
+        }
         .modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 12px;
             margin-top: 24px;
-        }
-        .btn-secondary {
-            background: #f1f2f7;
-            color: #727785;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-        }
-        .btn-secondary:hover {
-            background: #e4e6f1;
-            color: #1a1d24;
         }
         .empty-state {
             text-align: center;
@@ -401,7 +609,6 @@
             border: 1px dashed #cbd5e1;
             grid-column: 1 / -1;
         }
-        /* ESTILOS DO MODAL DE DETALHES */
         .view-applies {
             background: #f8f7ff;
             border: 1px solid #e2d9ff;
@@ -433,6 +640,36 @@
             padding-top: 16px;
             margin-top: 20px;
         }
+        /* --- RESPONSIVO --- */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                width: 100%;
+            }
+            .header-top {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .tabs-container {
+                overflow-x: auto;
+            }
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+                white-space: nowrap;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .tags-input-wrapper {
+                flex-direction: column;
+            }
+            .tags-dropdown-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -446,16 +683,14 @@
                     <p class="subtitle">Crie post-its com links, textos e hashtags organizadas.</p>
                 </div>
                 <button class="btn-primary" onclick="abrirModal()">
-                    <span>+</span> Nova Anotação
+                    <i class="fas fa-plus"></i> Nova Anotação
                 </button>
             </div>
             <!-- BUSCA E TAGS -->
             <div class="filter-bar">
                 <div class="search-input-wrapper">
                     <span class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-                        </svg>
+                        <i class="fas fa-search"></i>
                     </span>
                     <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar por título, destaque, conteúdo ou #hashtag..." oninput="filtrarNotas()">
                 </div>
@@ -464,18 +699,37 @@
                     <span class="tag-badge active" onclick="filtrarPorTag('todas', this)">#todas</span>
                 </div>
             </div>
-            <!-- SEÇÃO FIXADOS -->
-            <div id="pinnedSection" style="display: none;">
-                <div class="section-title">📌 FIXADOS NO TOPO</div>
-                <div class="cards-grid" id="pinnedGrid"></div>
+
+            <!-- TABS: TODAS e FAVORITOS -->
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="todas" onclick="switchTab('todas')">
+                    <i class="fas fa-list-ul"></i> Todas
+                </button>
+                <button class="tab-btn" data-tab="favoritos" onclick="switchTab('favoritos')">
+                    <i class="fas fa-star"></i> Favoritos
+                </button>
             </div>
-            <!-- SEÇÃO OUTRAS ANOTAÇÕES -->
-            <div>
-                <div class="section-title" id="otherSectionTitle">TODAS AS ANOTAÇÕES</div>
-                <div class="cards-grid" id="otherGrid"></div>
+
+            <!-- TAB TODAS -->
+            <div id="tab-todas" class="tab-content active">
+                <div id="pinnedSection" style="display: none;">
+                    <div class="section-title"><i class="fas fa-thumbtack"></i> FIXADOS NO TOPO</div>
+                    <div class="cards-grid" id="pinnedGrid"></div>
+                </div>
+                <div>
+                    <div class="section-title" id="otherSectionTitle">TODAS AS ANOTAÇÕES</div>
+                    <div class="cards-grid" id="otherGrid"></div>
+                </div>
+            </div>
+
+            <!-- TAB FAVORITOS -->
+            <div id="tab-favoritos" class="tab-content">
+                <div class="section-title"><i class="fas fa-star"></i> ANOTAÇÕES FAVORITAS</div>
+                <div class="cards-grid" id="favoritesGrid"></div>
             </div>
         </div>
     </main>
+
     <!-- MODAL DE CRIAÇÃO / EDIÇÃO -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
@@ -498,8 +752,21 @@
                     <textarea id="noteBody" class="form-control" placeholder="Escreva os detalhes ou cole URLs (ex: https://site.com)..." required></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="noteTags">Hashtags (separadas por vírgula ou espaço)</label>
-                    <input type="text" id="noteTags" class="form-control" placeholder="Ex: #onboarding, #link, #importante">
+                    <label for="noteTags">Hashtags</label>
+                    <div class="tags-input-container">
+                        <div class="tags-input-wrapper">
+                            <input type="text" id="noteTagsInput" class="tags-input" placeholder="Buscar ou criar #..." autocomplete="off">
+                            <button type="button" class="tags-dropdown-btn" onclick="toggleTagsDropdown()">
+                                <i class="fas fa-tags"></i> Selecionar
+                            </button>
+                        </div>
+                        <div class="tags-dropdown" id="tagsDropdown">
+                            <!-- Tags aparecem aqui via JavaScript -->
+                        </div>
+                    </div>
+                    <div class="selected-tags-container" id="selectedTagsContainer">
+                        <!-- Tags selecionadas aparecem aqui -->
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="fecharModal()">Cancelar</button>
@@ -508,6 +775,7 @@
             </form>
         </div>
     </div>
+
     <!-- MODAL DE VISUALIZAÇÃO DA NOTA -->
     <div class="modal-overlay" id="viewModalOverlay">
         <div class="modal">
@@ -524,20 +792,24 @@
             </div>
         </div>
     </div>
+
     <script>
         // ESTADO DA APLICAÇÃO
         let notas = [];
         let tagSelecionada = 'todas';
+        let selectedTags = [];
+        let currentTab = 'todas';
+        let allTags = [];
 
         // INICIALIZAÇÃO COM SUPABASE
         document.addEventListener('DOMContentLoaded', async () => {
             await carregarNotasDoSupabase();
+            setupTagsInput();
         });
 
         // LEITURA (READ) DO SUPABASE
         async function carregarNotasDoSupabase() {
             try {
-                // Assumindo que a instância do Supabase é inicializada via `auth.js` ou globalmente como `supabase`
                 const { data, error } = await _supabase
                     .from('notas')
                     .select('*')
@@ -546,7 +818,6 @@
                 if (error) throw error;
 
                 if (data) {
-                    // Mapeia os dados do banco garantindo a formatação adequada dos campos
                     notas = data.map(item => ({
                         id: item.id,
                         titulo: item.titulo || '',
@@ -554,14 +825,28 @@
                         corpo: item.corpo || '',
                         tags: Array.isArray(item.tags) ? item.tags : (item.tags ? item.tags.split(',') : []),
                         fixado: !!item.fixado,
+                        favorito: !!item.favorito,
                         data: item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
                     }));
+                    
+                    atualizarListaTags();
                 }
             } catch (err) {
                 console.error('Erro ao carregar anotações do Supabase:', err);
             } finally {
                 renderizarNotas();
             }
+        }
+
+        // ATUALIZAR LISTA DE TAGS EXISTENTES
+        function atualizarListaTags() {
+            const tagsSet = new Set();
+            notas.forEach(n => {
+                if (Array.isArray(n.tags)) {
+                    n.tags.forEach(t => tagsSet.add(t));
+                }
+            });
+            allTags = Array.from(tagsSet).sort();
         }
 
         // SEGURANÇA CONTRA XSS
@@ -577,11 +862,13 @@
             const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
             const pinnedGrid = document.getElementById('pinnedGrid');
             const otherGrid = document.getElementById('otherGrid');
+            const favoritesGrid = document.getElementById('favoritesGrid');
             const pinnedSection = document.getElementById('pinnedSection');
+            
             pinnedGrid.innerHTML = '';
             otherGrid.innerHTML = '';
+            favoritesGrid.innerHTML = '';
 
-            // Filtragem
             let notasFiltradas = notas.filter(nota => {
                 const quando = nota.quandoAplica ? nota.quandoAplica.toLowerCase() : '';
                 const bateTexto = nota.titulo.toLowerCase().includes(searchVal) || 
@@ -593,22 +880,31 @@
                 return bateTexto && bateTag;
             });
 
-            const fixadas = notasFiltradas.filter(n => n.fixado);
-            const outras = notasFiltradas.filter(n => !n.fixado);
+            if (currentTab === 'todas') {
+                const fixadas = notasFiltradas.filter(n => n.fixado);
+                const outras = notasFiltradas.filter(n => !n.fixado);
 
-            // Renderizar Fixadas
-            if (fixadas.length > 0) {
-                pinnedSection.style.display = 'block';
-                fixadas.forEach(nota => pinnedGrid.appendChild(criarCardElement(nota)));
-            } else {
-                pinnedSection.style.display = 'none';
+                if (fixadas.length > 0) {
+                    pinnedSection.style.display = 'block';
+                    fixadas.forEach(nota => pinnedGrid.appendChild(criarCardElement(nota)));
+                } else {
+                    pinnedSection.style.display = 'none';
+                }
+
+                if (outras.length > 0) {
+                    outras.forEach(nota => otherGrid.appendChild(criarCardElement(nota)));
+                } else if (fixadas.length === 0) {
+                    otherGrid.innerHTML = `<div class="empty-state">Nenhuma anotação encontrada. Clique em "+ Nova Anotação" para criar!</div>`;
+                }
             }
 
-            // Renderizar Outras
-            if (outras.length > 0) {
-                outras.forEach(nota => otherGrid.appendChild(criarCardElement(nota)));
-            } else if (fixadas.length === 0) {
-                otherGrid.innerHTML = `<div class="empty-state">Nenhuma anotação encontrada. Clique em "+ Nova Anotação" para criar!</div>`;
+            if (currentTab === 'favoritos') {
+                const favoritas = notasFiltradas.filter(n => n.favorito);
+                if (favoritas.length > 0) {
+                    favoritas.forEach(nota => favoritesGrid.appendChild(criarCardElement(nota)));
+                } else {
+                    favoritesGrid.innerHTML = `<div class="empty-state">Nenhuma anotação favorita ainda. <i class="fas fa-star" style="color: #f59e0b;"></i><br>Clique na estrela em uma anotação para favoritá-la!</div>`;
+                }
             }
 
             atualizarBarraHashtags();
@@ -625,7 +921,7 @@
         // CRIAR ELEMENTO DO CARD
         function criarCardElement(nota) {
             const card = document.createElement('div');
-            card.className = `card ${nota.fixado ? 'pinned' : ''}`;
+            card.className = `card ${nota.fixado ? 'pinned' : ''} ${nota.favorito ? 'favorited' : ''}`;
             
             card.onclick = () => abrirViewModal(nota.id);
             const tagsHTML = nota.tags.map(t => `<span class="card-tag">${escapeHTML(t)}</span>`).join('');
@@ -636,9 +932,14 @@
                 <div>
                     <div class="card-header">
                         <h3 class="card-title">${escapeHTML(nota.titulo)}</h3>
-                        <button class="pin-btn" onclick="event.stopPropagation(); toggleFixar(${nota.id})" title="${nota.fixado ? 'Desafixar' : 'Fixar no topo'}">
-                            📌
-                        </button>
+                        <div class="card-actions-header">
+                            <button class="action-icon-btn ${nota.favorito ? 'fav-active' : ''}" onclick="event.stopPropagation(); toggleFavorito(${nota.id})" title="${nota.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                                <i class="${nota.favorito ? 'fas' : 'far'} fa-star"></i>
+                            </button>
+                            <button class="action-icon-btn ${nota.fixado ? 'pin-active' : ''}" onclick="event.stopPropagation(); toggleFixar(${nota.id})" title="${nota.fixado ? 'Desafixar' : 'Fixar no topo'}">
+                                <i class="${nota.fixado ? 'fas' : 'far'} fa-thumbtack"></i>
+                            </button>
+                        </div>
                     </div>
                     ${aplicaHTML}
                     <div class="card-body">${corpoFormatado}</div>
@@ -677,6 +978,21 @@
             hashtagsBar.innerHTML = html;
         }
 
+        // SWITCH TABS
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === `tab-${tab}`);
+            });
+            
+            renderizarNotas();
+        }
+
         function filtrarPorTag(tag, element) {
             tagSelecionada = tag;
             renderizarNotas();
@@ -694,7 +1010,7 @@
             const novoStatus = !nota.fixado;
 
             try {
-                const { error } = await supabase
+                const { error } = await _supabase
                     .from('notas')
                     .update({ fixado: novoStatus })
                     .eq('id', id);
@@ -708,47 +1024,57 @@
             }
         }
 
+        async function toggleFavorito(id) {
+            const nota = notas.find(n => n.id === id);
+            if (!nota) return;
+
+            const novoStatus = !nota.favorito;
+
+            try {
+                const { error } = await _supabase
+                    .from('notas')
+                    .update({ favorito: novoStatus })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                nota.favorito = novoStatus;
+                renderizarNotas();
+            } catch (err) {
+                console.error('Erro ao atualizar status de favorito:', err);
+            }
+        }
+
         async function salvarNota(e) {
             e.preventDefault();
             const id = document.getElementById('noteId').value;
             const titulo = document.getElementById('noteTitle').value.trim();
             const quandoAplica = document.getElementById('noteAppliesTo').value.trim();
             const corpo = document.getElementById('noteBody').value.trim();
-            const rawTags = document.getElementById('noteTags').value.trim();
-
-            let tags = [];
-            if (rawTags) {
-                tags = rawTags.split(/[\s,]+/).map(t => {
-                    t = t.trim();
-                    if (!t) return null;
-                    return t.startsWith('#') ? t : `#${t}`;
-                }).filter(Boolean);
-            }
 
             try {
                 if (id) {
-                    // Editar existente (UPDATE)
                     const { error } = await _supabase
                         .from('notas')
                         .update({
                             titulo,
                             quandoAplica,
                             corpo,
-                            tags
+                            tags: selectedTags
                         })
                         .eq('id', id);
 
                     if (error) throw error;
                 } else {
-                    // Criar nova (INSERT)
                     const { error } = await _supabase
                         .from('notas')
                         .insert([{
                             titulo,
                             quandoAplica,
                             corpo,
-                            tags,
-                            fixado: false
+                            tags: selectedTags,
+                            fixado: false,
+                            favorito: false
                         }]);
 
                     if (error) throw error;
@@ -764,11 +1090,14 @@
         function editarNota(id) {
             const nota = notas.find(n => n.id === id);
             if (!nota) return;
+            
             document.getElementById('noteId').value = nota.id;
             document.getElementById('noteTitle').value = nota.titulo;
             document.getElementById('noteAppliesTo').value = nota.quandoAplica || '';
             document.getElementById('noteBody').value = nota.corpo;
-            document.getElementById('noteTags').value = nota.tags ? nota.tags.join(', ') : '';
+            
+            selectedTags = [...nota.tags];
+            atualizarTagsSelecionadasUI();
             
             document.getElementById('modalTitleText').innerText = "Editar Anotação";
             fecharViewModal();
@@ -792,9 +1121,148 @@
             }
         }
 
+        // CONFIGURAÇÃO DO INPUT DE TAGS
+        function setupTagsInput() {
+            const input = document.getElementById('noteTagsInput');
+            
+            input.addEventListener('input', function() {
+                const value = this.value.trim().toLowerCase();
+                renderizarDropdownTags(value);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const value = this.value.trim();
+                    if (value) {
+                        const tag = value.startsWith('#') ? value : `#${value}`;
+                        adicionarTag(tag);
+                        this.value = '';
+                        document.getElementById('tagsDropdown').classList.remove('show');
+                    }
+                }
+            });
+
+            // Fecha dropdown ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.tags-input-container')) {
+                    document.getElementById('tagsDropdown').classList.remove('show');
+                }
+            });
+        }
+
+        function toggleTagsDropdown() {
+            const dropdown = document.getElementById('tagsDropdown');
+            const isOpen = dropdown.classList.contains('show');
+            
+            if (isOpen) {
+                dropdown.classList.remove('show');
+            } else {
+                renderizarDropdownTags('');
+                dropdown.classList.add('show');
+            }
+        }
+
+        function renderizarDropdownTags(filtro) {
+            const dropdown = document.getElementById('tagsDropdown');
+            const filtroLower = filtro.toLowerCase().trim();
+            
+            let tagsFiltradas = allTags.filter(tag => 
+                tag.toLowerCase().includes(filtroLower) && !selectedTags.includes(tag)
+            );
+            
+            // Se não encontrou nenhuma tag, mostra opção para criar nova
+            let html = '';
+            
+            if (tagsFiltradas.length > 0) {
+                tagsFiltradas.forEach(tag => {
+                    const isSelected = selectedTags.includes(tag);
+                    html += `
+                        <div class="tag-dropdown-item" onclick="adicionarTag('${escapeHTML(tag)}')">
+                            <span class="tag-check">#</span>
+                            ${escapeHTML(tag)}
+                            ${isSelected ? '<span class="tag-select-indicator"><i class="fas fa-check"></i></span>' : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            // Adiciona opção para criar nova tag
+            if (filtro && filtro.trim() !== '') {
+                const novaTag = filtro.startsWith('#') ? filtro : `#${filtro}`;
+                if (!selectedTags.includes(novaTag) && !allTags.includes(novaTag)) {
+                    html += `
+                        <div class="tag-dropdown-divider"></div>
+                        <div class="tag-dropdown-add" onclick="adicionarTag('${escapeHTML(novaTag)}')">
+                            <i class="fas fa-plus-circle"></i>
+                            Criar nova tag: <strong>${escapeHTML(novaTag)}</strong>
+                        </div>
+                    `;
+                }
+            } else if (tagsFiltradas.length === 0 && allTags.length > 0) {
+                // Se não tem filtro e não tem tags disponíveis
+                html += `
+                    <div class="tag-dropdown-item" style="color: #9499a6; cursor: default;">
+                        Digite para criar uma nova tag
+                    </div>
+                `;
+            }
+            
+            dropdown.innerHTML = html;
+        }
+
+        function adicionarTag(tag) {
+            let tagFormatada = tag.trim();
+            if (!tagFormatada.startsWith('#')) {
+                tagFormatada = `#${tagFormatada}`;
+            }
+            
+            tagFormatada = tagFormatada.replace(/\s+/g, '').toLowerCase();
+            
+            if (!selectedTags.includes(tagFormatada)) {
+                selectedTags.push(tagFormatada);
+                atualizarTagsSelecionadasUI();
+                
+                if (!allTags.includes(tagFormatada)) {
+                    allTags.push(tagFormatada);
+                    allTags.sort();
+                }
+            }
+            
+            document.getElementById('noteTagsInput').value = '';
+            document.getElementById('tagsDropdown').classList.remove('show');
+        }
+
+        function removerTag(tag) {
+            selectedTags = selectedTags.filter(t => t !== tag);
+            atualizarTagsSelecionadasUI();
+        }
+
+        function atualizarTagsSelecionadasUI() {
+            const container = document.getElementById('selectedTagsContainer');
+            if (selectedTags.length === 0) {
+                container.innerHTML = `<span style="color: #9499a6; font-size: 0.85rem;">Nenhuma hashtag selecionada</span>`;
+            } else {
+                container.innerHTML = selectedTags.map(tag => `
+                    <span class="selected-tag">
+                        ${escapeHTML(tag)}
+                        <span class="remove-tag" onclick="removerTag('${escapeHTML(tag)}')"><i class="fas fa-times"></i></span>
+                    </span>
+                `).join('');
+            }
+        }
+
         // CONTROLE DOS MODAIS
         function abrirModal() {
+            if (document.getElementById('noteId').value === '') {
+                selectedTags = [];
+                atualizarTagsSelecionadasUI();
+            }
             document.getElementById('modalOverlay').classList.add('active');
+            // Foca no primeiro campo
+            setTimeout(() => {
+                document.getElementById('noteTitle').focus();
+            }, 100);
         }
 
         function fecharModal() {
@@ -802,6 +1270,9 @@
             document.getElementById('noteForm').reset();
             document.getElementById('noteId').value = '';
             document.getElementById('modalTitleText').innerText = "Nova Anotação";
+            selectedTags = [];
+            atualizarTagsSelecionadasUI();
+            document.getElementById('tagsDropdown').classList.remove('show');
         }
 
         function abrirViewModal(id) {
