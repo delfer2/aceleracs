@@ -497,7 +497,7 @@
                 <input type="date" id="preDataTreinamento" required />
               </div>
 
-              <!-- NOVO CAMPO SOLICITADO: TIPO DE PLANO -->
+              <!-- CAMPO: TIPO DE PLANO -->
               <div class="form-group">
                 <label>Tipo de Plano / Pagamento *</label>
                 <select id="preTipoPagamento" required>
@@ -744,11 +744,9 @@
               >
                 <option value="">Selecione...</option>
                 <option value="Consulta Individual">Consulta Individual</option>
-                <option value="Enriquecimento Massivo">
-                  Enriquecimento Massivo (Lote)
-                </option>
-                <option value="API / Integração">API / Integração</option>
-                <option value="Ambas">Ambas</option>
+                <option value="Enriquecimento">Enriquecimento</option>
+                <option value="API">API / Integração</option>
+                <option value="Consulta/Enriquecimento">Consulta / Enriquecimento</option>
               </select>
             </div>
             <div class="form-group">
@@ -839,10 +837,10 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Necessita de Re-treinamento / Follow-up?</label>
-              <select id="jornadaFollowUp" onchange="salvarProgressoJornada()">
-                <option value="Não">Não - Treinamento Finalizado</option>
-                <option value="Sim">Sim - Agendar Novo Encontro</option>
+              <label>Status do Treinamento</label>
+              <select id="jornadaStatusFinal" onchange="salvarProgressoJornada()">
+                <option value="Concluído">Concluído - Treinamento Finalizado</option>
+                <option value="Pendente">Pendente - Novo alinhamento necessário</option>
               </select>
             </div>
             <div class="form-group full-width">
@@ -1110,7 +1108,7 @@
             duvidas: '',
             produtosApresentados: [],
             engajamento: 'Alto',
-            followUp: 'Não',
+            statusFinal: 'Concluído',
             anotacoesFinais: '',
           };
           clientes.push(novoCliente);
@@ -1272,8 +1270,8 @@
 
         document.getElementById('jornadaEngajamento').value =
           cliente.engajamento || 'Alto';
-        document.getElementById('jornadaFollowUp').value =
-          cliente.followUp || 'Não';
+        document.getElementById('jornadaStatusFinal').value =
+          cliente.statusFinal || 'Concluído';
         document.getElementById('jornadaAnotacoesFinais').value =
           cliente.anotacoesFinais || '';
 
@@ -1308,8 +1306,8 @@
           obterValoresDynamic('.input-produto');
         clientes[idx].engajamento =
           document.getElementById('jornadaEngajamento').value;
-        clientes[idx].followUp =
-          document.getElementById('jornadaFollowUp').value;
+        clientes[idx].statusFinal =
+          document.getElementById('jornadaStatusFinal').value;
         clientes[idx].anotacoesFinais = document
           .getElementById('jornadaAnotacoesFinais')
           .value.trim();
@@ -1382,7 +1380,7 @@
         }
       }
 
-      /* --- COPIAR PARA CLIPBOARD --- */
+      /* --- COPIAR PARA CLIPBOARD - VERSÃO PROFISSIONAL SEM EMOJIS --- */
       function copiarInformacoesClipboard() {
         if (!clienteAtualId) return;
         const cliente = clientes.find((c) => c.id === clienteAtualId);
@@ -1395,35 +1393,33 @@
           : 'Não informada';
         const destaquesTexto =
           cliente.destaques && cliente.destaques.length > 0
-            ? cliente.destaques.map((d) => `  • ${d}`).join('\n')
+            ? cliente.destaques.map((d) => `  - ${d}`).join('\n')
             : '  Nenhum registrado';
         const produtosTexto =
           cliente.produtosApresentados &&
           cliente.produtosApresentados.length > 0
-            ? cliente.produtosApresentados.map((p) => `  • ${p}`).join('\n')
+            ? cliente.produtosApresentados.map((p) => `  - ${p}`).join('\n')
             : '  Nenhum registrado';
 
         const textoRelatorio = `
-📌 RESUMO DO TREINAMENTO & JORNADA DO CLIENTE
+RELATÓRIO DE TREINAMENTO - JORNADA DO CLIENTE
 
-🏢 Empresa: ${cliente.nome} ${
-          cliente.potencialKolmeya ? '[⚡ POTENCIAL KOLMEYA]' : ''
-        }
-👤 Agendado por: ${cliente.quemAgendou || '-'}
-📅 Data: ${dataFmt}
-💳 Tipo de Plano: ${cliente.tipoPagamento || 'Não informado'}
-👥 Participantes: ${cliente.participantes || 'Não informados'}
+EMPRESA: ${cliente.nome} ${cliente.potencialKolmeya ? '[POTENCIAL KOLMEYA]' : ''}
+AGENDADO POR: ${cliente.quemAgendou || '-'}
+DATA DO TREINAMENTO: ${dataFmt}
+TIPO DE PLANO: ${cliente.tipoPagamento || 'Não informado'}
+PARTICIPANTES: ${cliente.participantes || 'Não informados'}
 
 --------------------------------------------------
 1. INFORMAÇÕES DE PRÉ-CADASTRO
 --------------------------------------------------
-• Já usa/usou plataforma? ${
+Já usa/usou plataforma de dados? ${
           cliente.realizouConsulta === 'Sim'
             ? `Sim (${cliente.plataformaAnterior})`
             : 'Não'
         }
-• Cadastrou usuário? ${cliente.cadastrouUsuario || 'Não'}
-• Observações Prévias: ${cliente.observacoes || 'Nenhuma'}
+Cadastrou usuário? ${cliente.cadastrouUsuario || 'Não'}
+Observações Prévias: ${cliente.observacoes || 'Nenhuma'}
 
 Destaques Mapeados:
 ${destaquesTexto}
@@ -1431,23 +1427,23 @@ ${destaquesTexto}
 --------------------------------------------------
 2. MAPEAMENTO DE PERFIL
 --------------------------------------------------
-• Segmento: ${cliente.segmento || 'Não informado'}
-• Porte: ${cliente.porte || 'Não informado'}
-• Funcionalidade Prioritária: ${cliente.funcionalidade || 'Não informada'}
-• Volume Estimado: ${cliente.volume || 'Não informado'}
-• Informações que TEM na base: ${cliente.infoTemNaBase || 'Não informado'}
-• Informações que QUER TER/Enriquecer: ${cliente.infoQuerTer || 'Não informado'}
-• Dúvidas/Dificuldades: ${cliente.duvidas || 'Nenhuma'}
+Segmento de Mercado: ${cliente.segmento || 'Não informado'}
+Porte da Empresa: ${cliente.porte || 'Não informado'}
+Funcionalidade Prioritária: ${cliente.funcionalidade || 'Não informada'}
+Volume Estimado de Uso: ${cliente.volume || 'Não informado'}
+Informações que POSSUI na base: ${cliente.infoTemNaBase || 'Não informado'}
+Informações que DESEJA ENRIQUECER: ${cliente.infoQuerTer || 'Não informado'}
+Dúvidas e Dificuldades: ${cliente.duvidas || 'Nenhuma'}
 
 --------------------------------------------------
-3. FECHAMENTO & PRODUTOS
+3. FECHAMENTO E PRODUTOS APRESENTADOS
 --------------------------------------------------
-Produtos/Módulos Apresentados:
+Produtos e Módulos Apresentados:
 ${produtosTexto}
 
-• Engajamento: ${cliente.engajamento || 'Não informado'}
-• Necessita Follow-Up? ${cliente.followUp || 'Não'}
-• Resumo Final / Notas do CS: ${
+Nível de Engajamento: ${cliente.engajamento || 'Não informado'}
+Status Final do Treinamento: ${cliente.statusFinal || 'Concluído'}
+Anotações Finais do CS: ${
           cliente.anotacoesFinais || 'Sem anotações finais'
         }
         `.trim();
