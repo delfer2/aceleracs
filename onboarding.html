@@ -455,6 +455,11 @@
         color: #6226ef;
         border-color: #e2d9ff;
       }
+      .toolbar-btn.is-active {
+        background: #6226ef;
+        color: #ffffff;
+        border-color: #6226ef;
+      }
       .toolbar-sep {
         width: 1px;
         background: #e4e6f1;
@@ -590,6 +595,7 @@
         font-family: inherit;
       }
       .floating-btn:hover { background: #6226ef; }
+      .floating-btn.is-active { background: #6226ef; }
 
       /* --- PREVIEW WHATSAPP MOBILE --- */
       .wa-preview-wrapper { display: flex; justify-content: center; margin-top: 10px; }
@@ -861,9 +867,8 @@
           <button class="btn-primary" onclick="abrirModalRegistro()">Registrar Treinamento</button>
         </div>
 
-        <!-- BARRA DE PESQUISA GERAL -->
         <div class="search-wrapper" id="searchWrapper">
-          <span class="search-icon"></span>
+          <span class="search-icon">🔍</span>
           <input
             type="text"
             id="searchInput"
@@ -907,7 +912,6 @@
 
         </div>
 
-        <!-- RESULTADOS DE BUSCA (oculto por padrão) -->
         <div class="card hidden" id="cardResultados">
           <div style="padding: 24px 28px 28px;">
             <div id="listaResultados" class="items-list"></div>
@@ -916,7 +920,7 @@
       </div>
     </main>
 
-    <!-- MODAL DE REGISTRO (SEM WHATSAPP) -->
+    <!-- MODAL DE REGISTRO -->
     <div id="modalRegistro" class="modal-overlay hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -968,7 +972,7 @@
       </div>
     </div>
 
-    <!-- MODAL DE ITEM (COM WHATSAPP) -->
+    <!-- MODAL DE ITEM -->
     <div id="modalItem" class="modal-overlay hidden">
       <div class="modal-container" id="modalItemContainer">
         <div class="modal-header">
@@ -1059,7 +1063,7 @@
       </div>
     </div>
 
-    <!-- MODAL DE VISUALIZAÇÃO (LEITURA DO ITEM) -->
+    <!-- MODAL DE VISUALIZAÇÃO -->
     <div id="modalView" class="modal-overlay hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -1159,7 +1163,6 @@
           return;
         }
 
-        // Modo busca: esconde o card com abas, mostra resultados
         cardPrincipal.classList.add('hidden');
         cardResultados.classList.remove('hidden');
 
@@ -1213,9 +1216,6 @@
       function destacarTermo(texto, termo) {
         if (!termo) return escapeHtml(texto);
         const escapado = escapeHtml(texto);
-        const termoNorm = normalizar(termo);
-        if (!termoNorm) return escapado;
-        // Busca simples no texto escapado (não lida com acentos perfeitos, mas ok para destaque visual)
         const regex = new RegExp('(' + termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
         return escapado.replace(regex, '<mark>$1</mark>');
       }
@@ -1387,25 +1387,20 @@
         if (buscaAtiva) aplicarBusca(); else renderizarItens();
       }
 
-      /* ==================== CONVERSÃO HTML → WHATSAPP (SEM ESPAÇOS EXTRAS) ==================== */
+      /* ==================== CONVERSÃO HTML → WHATSAPP ==================== */
 
       function htmlParaWhatsApp(html) {
         const tmp = document.createElement('div');
         tmp.innerHTML = html;
 
-        function processar(node, isBlock) {
+        function processar(node) {
           let texto = '';
-          const filhos = Array.from(node.childNodes);
-          filhos.forEach((child, idx) => {
+          Array.from(node.childNodes).forEach(child => {
             if (child.nodeType === Node.TEXT_NODE) {
               texto += child.textContent;
             } else if (child.nodeType === Node.ELEMENT_NODE) {
               const tag = child.tagName.toLowerCase();
-
-              // Blocos que devem gerar quebra entre eles
-              const isBlockChild = ['p', 'div', 'blockquote', 'ol', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag);
-
-              let conteudo = processar(child, isBlockChild);
+              let conteudo = processar(child);
 
               if (tag === 'b' || tag === 'strong') {
                 texto += '*' + conteudo + '*';
@@ -1418,27 +1413,25 @@
               } else if (tag === 'br') {
                 texto += '\n';
               } else if (tag === 'blockquote') {
-                // Cada linha do blockquote vira "> linha"
                 const linhas = conteudo.split('\n').filter(l => l.trim() !== '');
                 texto += linhas.map(l => '> ' + l.trim()).join('\n');
               } else if (tag === 'ol') {
                 let n = 1;
                 const itensLi = child.querySelectorAll(':scope > li');
                 itensLi.forEach((li, i) => {
-                  const textoLi = processar(li, true).trim();
+                  const textoLi = processar(li).trim();
                   texto += (i > 0 ? '\n' : '') + n + '. ' + textoLi;
                   n++;
                 });
               } else if (tag === 'ul') {
                 const itensLi = child.querySelectorAll(':scope > li');
                 itensLi.forEach((li, i) => {
-                  const textoLi = processar(li, true).trim();
+                  const textoLi = processar(li).trim();
                   texto += (i > 0 ? '\n' : '') + '• ' + textoLi;
                 });
               } else if (tag === 'li') {
                 texto += conteudo;
               } else if (tag === 'p' || tag === 'div' || /^h[1-6]$/.test(tag)) {
-                // Bloco: preserva o conteúdo + quebra simples
                 texto += conteudo;
                 if (!conteudo.endsWith('\n')) texto += '\n';
               } else {
@@ -1449,11 +1442,8 @@
           return texto;
         }
 
-        let resultado = processar(tmp, false);
-
-        // Normaliza: no máximo 1 linha em branco (2 \n) entre parágrafos
+        let resultado = processar(tmp);
         resultado = resultado.replace(/\n{3,}/g, '\n\n');
-        // Remove \n no início e fim
         resultado = resultado.replace(/^\n+/, '').replace(/\n+$/, '');
         return resultado;
       }
@@ -1473,7 +1463,7 @@
         return html;
       }
 
-      /* ==================== PREVIEW DO ITEM (WhatsApp) ==================== */
+      /* ==================== PREVIEW DO ITEM ==================== */
 
       function montarTextoItem(item) {
         return `*${item.titulo}*\n${htmlParaWhatsApp(item.corpoHtml)}`;
@@ -1491,6 +1481,8 @@
         const agora = new Date();
         document.getElementById('waHoraItem').innerText =
           String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+
+        atualizarEstadoBotoesToggle();
       }
 
       /* ==================== COPIAR ITEM ==================== */
@@ -1506,6 +1498,180 @@
         });
       }
 
+      /* ==================== HELPERS DE SELEÇÃO ==================== */
+
+      function getSelectionWithinEditor() {
+        const editor = document.getElementById('editorContent');
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return null;
+        const range = sel.getRangeAt(0);
+        if (!editor.contains(range.commonAncestorContainer)) return null;
+        return { sel, range, editor };
+      }
+
+      function encontrarAncestral(node, tagName) {
+        const editor = document.getElementById('editorContent');
+        let atual = node;
+        const alvo = tagName.toUpperCase();
+        while (atual && atual !== editor) {
+          if (atual.nodeType === 1 && atual.tagName === alvo) return atual;
+          atual = atual.parentNode;
+        }
+        return null;
+      }
+
+      function selecionarNode(node) {
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      /* ==================== TOGGLE CODE (</>) ==================== */
+
+      function toggleCode() {
+        const ctx = getSelectionWithinEditor();
+        if (!ctx) {
+          // Sem seleção no editor — não faz nada
+          return;
+        }
+        const { sel, range, editor } = ctx;
+
+        // Caso 1: está dentro de um <code> — remover (unwrap)
+        const codeAncestral = encontrarAncestral(range.commonAncestorContainer, 'code');
+        if (codeAncestral) {
+          removerCode(codeAncestral, editor);
+          atualizarPreviewItem();
+          return;
+        }
+
+        // Caso 2: seleção vazia (só cursor) — nada para envolver
+        if (sel.isCollapsed) {
+          // Insere um <code> vazio e coloca o cursor dentro
+          const code = document.createElement('code');
+          code.appendChild(document.createTextNode('\u200b')); // zero-width space para ter conteúdo
+          range.insertNode(code);
+          // Coloca o cursor após o zero-width space
+          const newRange = document.createRange();
+          newRange.setStart(code.firstChild, 1);
+          newRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+          atualizarPreviewItem();
+          return;
+        }
+
+        // Caso 3: tem seleção de texto — envolver em <code>
+        const texto = range.toString();
+        if (!texto) return;
+
+        // Se a seleção cruza vários blocos, pega apenas o texto e substitui
+        const code = document.createElement('code');
+        code.appendChild(document.createTextNode(texto));
+        try {
+          range.deleteContents();
+          range.insertNode(code);
+        } catch (e) {
+          // Fallback: se não der para envolver, insere no início
+          editor.appendChild(code);
+        }
+        atualizarPreviewItem();
+      }
+
+      function removerCode(codeEl, editor) {
+        const parent = codeEl.parentNode;
+        if (!parent) return;
+        while (codeEl.firstChild) {
+          parent.insertBefore(codeEl.firstChild, codeEl);
+        }
+        parent.removeChild(codeEl);
+        parent.normalize();
+      }
+
+      /* ==================== TOGGLE BLOCKQUOTE (") ==================== */
+
+      function toggleBlockquote() {
+        const ctx = getSelectionWithinEditor();
+        if (!ctx) return;
+        const { range, editor } = ctx;
+
+        // Verifica se o cursor/selection está dentro de um blockquote
+        const bqAncestral = encontrarAncestral(range.commonAncestorContainer, 'blockquote');
+
+        if (bqAncestral) {
+          removerBlockquote(bqAncestral, editor);
+          atualizarPreviewItem();
+          return;
+        }
+
+        // Aplicar: envolve o(s) bloco(s) atual(is) em blockquote
+        aplicarBlockquote(range, editor);
+        atualizarPreviewItem();
+      }
+
+      function aplicarBlockquote(range, editor) {
+        // Pega o bloco de linha atual (o elemento pai imediato dentro do editor)
+        let bloco = range.startContainer;
+        // Sobe até achar um filho direto do editor ou o próprio editor
+        while (bloco && bloco.parentNode !== editor && bloco !== editor) {
+          bloco = bloco.parentNode;
+        }
+        if (!bloco || bloco === editor) {
+          // Cursor solto no editor — envolve o conteúdo todo do editor
+          const conteudo = editor.innerHTML;
+          if (!conteudo.trim()) {
+            // Cria um blockquote vazio
+            const bq = document.createElement('blockquote');
+            bq.appendChild(document.createElement('br'));
+            editor.appendChild(bq);
+            return;
+          }
+          return;
+        }
+
+        // Se o bloco já é um blockquote (checado antes), não aplica
+        if (bloco.tagName === 'BLOCKQUOTE') return;
+
+        // Envolve o bloco em um blockquote
+        const bq = document.createElement('blockquote');
+        bloco.parentNode.insertBefore(bq, bloco);
+        bq.appendChild(bloco);
+      }
+
+      function removerBlockquote(bqEl, editor) {
+        const parent = bqEl.parentNode;
+        if (!parent) return;
+
+        // Substitui o blockquote pelos seus filhos (unwrap)
+        // Se houver linhas (divs/p) internas, mantém como parágrafos
+        const filhos = Array.from(bqEl.childNodes);
+        filhos.forEach(filho => {
+          parent.insertBefore(filho, bqEl);
+        });
+        parent.removeChild(bqEl);
+        parent.normalize();
+      }
+
+      /* ==================== ESTADO DOS BOTÕES TOGGLE ==================== */
+
+      function atualizarEstadoBotoesToggle() {
+        const ctx = getSelectionWithinEditor();
+        const btnCode = document.querySelector('.toolbar-btn[data-cmd="code"]');
+        const btnQuote = document.querySelector('.toolbar-btn[data-cmd="blockquote"]');
+        if (!btnCode || !btnQuote) return;
+        if (!ctx) {
+          btnCode.classList.remove('is-active');
+          btnQuote.classList.remove('is-active');
+          return;
+        }
+        const { range } = ctx;
+        const inCode = !!encontrarAncestral(range.commonAncestorContainer, 'code');
+        const inQuote = !!encontrarAncestral(range.commonAncestorContainer, 'blockquote');
+        btnCode.classList.toggle('is-active', inCode);
+        btnQuote.classList.toggle('is-active', inQuote);
+      }
+
       /* ==================== EDITOR RICO ==================== */
 
       function initEditor() {
@@ -1515,16 +1681,42 @@
         toolbarBtns.forEach(btn => {
           btn.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            aplicarComando(btn.dataset.cmd);
-            atualizarPreviewItem();
+            const cmd = btn.dataset.cmd;
+
+            if (cmd === 'code') {
+              toggleCode();
+            } else if (cmd === 'blockquote') {
+              toggleBlockquote();
+            } else if (cmd === 'undo') {
+              document.execCommand('undo', false, null);
+              atualizarPreviewItem();
+            } else if (cmd === 'redo') {
+              document.execCommand('redo', false, null);
+              atualizarPreviewItem();
+            } else {
+              editor.focus();
+              document.execCommand(cmd, false, null);
+              atualizarPreviewItem();
+            }
+            editor.focus();
+            atualizarEstadoBotoesToggle();
           });
         });
 
         editor.addEventListener('input', atualizarPreviewItem);
-        editor.addEventListener('keyup', atualizarPreviewItem);
-        editor.addEventListener('mouseup', tratarSelecao);
+        editor.addEventListener('keyup', () => {
+          atualizarPreviewItem();
+          atualizarEstadoBotoesToggle();
+        });
+        editor.addEventListener('mouseup', () => {
+          tratarSelecao();
+          atualizarEstadoBotoesToggle();
+        });
         editor.addEventListener('keyup', (e) => {
-          if (e.shiftKey || e.ctrlKey || e.metaKey) tratarSelecao();
+          if (e.shiftKey || e.ctrlKey || e.metaKey) {
+            tratarSelecao();
+            atualizarEstadoBotoesToggle();
+          }
         });
 
         editor.addEventListener('paste', (e) => {
@@ -1533,7 +1725,53 @@
           document.execCommand('insertText', false, texto);
         });
 
+        // Enter dentro de <code> sai do code (quebra fora)
         editor.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            const ctx = getSelectionWithinEditor();
+            if (ctx) {
+              const { range, editor } = ctx;
+              const inCode = encontrarAncestral(range.commonAncestorContainer, 'code');
+              const inQuote = encontrarAncestral(range.commonAncestorContainer, 'blockquote');
+
+              if (inCode) {
+                // Sai do code: insere um <br> depois do code e move o cursor pra lá
+                e.preventDefault();
+                const br = document.createElement('br');
+                const codeEl = inCode;
+                codeEl.parentNode.insertBefore(br, codeEl.nextSibling);
+                // Insere também um <br> caso o próximo não exista (para ter linha em branco)
+                const newRange = document.createRange();
+                newRange.setStartAfter(br);
+                newRange.collapse(true);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                // Força quebra de linha
+                document.execCommand('insertHTML', false, '<br>');
+                atualizarPreviewItem();
+                return;
+              }
+
+              if (inQuote) {
+                // Sai do blockquote: cria um novo bloco fora dele
+                e.preventDefault();
+                const bq = inQuote;
+                const novaDiv = document.createElement('div');
+                novaDiv.appendChild(document.createElement('br'));
+                bq.parentNode.insertBefore(novaDiv, bq.nextSibling);
+                const newRange = document.createRange();
+                newRange.setStart(novaDiv, 0);
+                newRange.collapse(true);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                atualizarPreviewItem();
+                return;
+              }
+            }
+          }
+
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
             e.preventDefault();
             if (e.shiftKey) {
@@ -1541,42 +1779,18 @@
             } else {
               document.execCommand('undo', false, null);
             }
-            atualizarPreviewItem();
+            setTimeout(atualizarPreviewItem, 0);
           } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
             e.preventDefault();
             document.execCommand('redo', false, null);
-            atualizarPreviewItem();
+            setTimeout(atualizarPreviewItem, 0);
           }
         });
 
         initResizeHandle();
       }
 
-      function aplicarComando(cmd) {
-        const editor = document.getElementById('editorContent');
-        editor.focus();
-
-        if (cmd === 'code') {
-          const sel = window.getSelection();
-          if (!sel.rangeCount) return;
-          const range = sel.getRangeAt(0);
-          const code = document.createElement('code');
-          try {
-            range.surroundContents(code);
-          } catch (e) {
-            const texto = sel.toString();
-            document.execCommand('insertText', false, texto);
-          }
-        } else if (cmd === 'blockquote') {
-          document.execCommand('formatBlock', false, 'blockquote');
-        } else if (cmd === 'undo') {
-          document.execCommand('undo', false, null);
-        } else if (cmd === 'redo') {
-          document.execCommand('redo', false, null);
-        } else {
-          document.execCommand(cmd, false, null);
-        }
-      }
+      /* ==================== MENU FLUTUANTE ==================== */
 
       function tratarSelecao() {
         const editor = document.getElementById('editorContent');
@@ -1591,6 +1805,9 @@
         const rect = range.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();
 
+        const inCode = !!encontrarAncestral(range.commonAncestorContainer, 'code');
+        const inQuote = !!encontrarAncestral(range.commonAncestorContainer, 'blockquote');
+
         const menu = document.createElement('div');
         menu.className = 'floating-menu';
         menu.id = 'floatingMenu';
@@ -1598,10 +1815,10 @@
           <button class="floating-btn" data-cmd="bold" title="Negrito"><b>B</b></button>
           <button class="floating-btn" data-cmd="italic" title="Itálico"><i>I</i></button>
           <button class="floating-btn" data-cmd="strikeThrough" title="Tachado"><s>S</s></button>
-          <button class="floating-btn" data-cmd="code" title="Monoespaçado">&lt;/&gt;</button>
+          <button class="floating-btn ${inCode ? 'is-active' : ''}" data-cmd="code" title="Monoespaçado">&lt;/&gt;</button>
           <button class="floating-btn" data-cmd="insertOrderedList" title="Lista Numerada">1.</button>
           <button class="floating-btn" data-cmd="insertUnorderedList" title="Lista Marcadores">•</button>
-          <button class="floating-btn" data-cmd="blockquote" title="Citação">❝</button>
+          <button class="floating-btn ${inQuote ? 'is-active' : ''}" data-cmd="blockquote" title="Citação">❝</button>
         `;
 
         const top = rect.top - editorRect.top + editor.scrollTop - 50;
@@ -1614,9 +1831,16 @@
         menu.querySelectorAll('.floating-btn').forEach(btn => {
           btn.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            aplicarComando(btn.dataset.cmd);
+            const cmd = btn.dataset.cmd;
+            if (cmd === 'code') toggleCode();
+            else if (cmd === 'blockquote') toggleBlockquote();
+            else {
+              document.getElementById('editorContent').focus();
+              document.execCommand(cmd, false, null);
+            }
             removerMenuFlutuante();
             atualizarPreviewItem();
+            atualizarEstadoBotoesToggle();
           });
         });
       }
@@ -1839,6 +2063,12 @@
         document.getElementById('itemTitulo').addEventListener('input', atualizarPreviewItem);
         document.getElementById('editorContent').addEventListener('input', atualizarPreviewItem);
         document.getElementById('editorContent').addEventListener('keyup', atualizarPreviewItem);
+
+        // Atualiza estado dos botões quando o cursor muda
+        document.addEventListener('selectionchange', () => {
+          if (document.getElementById('modalItem').classList.contains('hidden')) return;
+          atualizarEstadoBotoesToggle();
+        });
       });
     </script>
     <script src="sidebar.js"></script>
