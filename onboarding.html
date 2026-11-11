@@ -884,6 +884,7 @@
             <button class="sub-tab-btn active" onclick="mudarSubGuia(event, 'guiaProdutos')">Produtos</button>
             <button class="sub-tab-btn" onclick="mudarSubGuia(event, 'guiaPasso')">Passo a Passo</button>
             <button class="sub-tab-btn" onclick="mudarSubGuia(event, 'guiaDica')">Dicas</button>
+            <button class="sub-tab-btn" onclick="mudarSubGuia(event, 'guiaTreinamentos')">Treinamentos Salvos</button>
           </div>
 
           <div id="guiaProdutos" class="sub-tab-content active">
@@ -909,6 +910,12 @@
             </div>
             <div id="listaDica" class="items-list"></div>
           </div>
+          <div id="guiaTreinamentos" class="sub-tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+              <p style="color: #64748b; font-size: 0.85rem;">Treinamentos registrados.</p>
+            </div>
+            <div id="listaTreinamentos" class="items-list"></div>
+          </div>
 
         </div>
 
@@ -924,7 +931,7 @@
     <div id="modalRegistro" class="modal-overlay hidden">
       <div class="modal-container">
         <div class="modal-header">
-          <h3>📝 Registrar Treinamento no CRM</h3>
+          <h3> Registrar Treinamento no CRM</h3>
           <button class="modal-close" onclick="fecharModalRegistro()">×</button>
         </div>
         <div class="modal-body">
@@ -961,13 +968,44 @@
             </div>
             <div id="produtosSelecionados" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
           </div>
+          <div class="form-group">
+            <label>Finalidade dos dados</label>
+            <input
+              type="text"
+              id="regFinalidade"
+              placeholder="Ex: análise de crédito, cobrança..."
+              oninput="atualizarPreviewRegistro()"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Potencial do cliente</label>
+            <select id="regPotencial" onchange="atualizarPreviewRegistro()">
+              <option value="">Selecione uma opção...</option>
+              <option value="Não possuí potencial para os demais sistemas no momento">Não possuí potencial para os demais sistemas no momento</option>
+              <option value="Possuí potencial para Vox">Possuí potencial para Vox</option>
+              <option value="Possuí potencial para SMS">Possuí potencial para SMS</option>
+              <option value="Possuí potencial para SMS e Vox">Possuí potencial para SMS e Vox</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Adicional</label>
+            <textarea
+              id="regAdicional"
+              rows="2"
+              placeholder="Informações adicionais..."
+              oninput="atualizarPreviewRegistro()"
+            ></textarea>
+          </div>
 
           <span class="preview-label">Pré-visualização do texto</span>
           <div id="previewRegistro" class="preview-text-box"></div>
         </div>
         <div class="modal-footer">
           <button class="btn-secondary" onclick="fecharModalRegistro()">Fechar</button>
-          <button class="btn-primary" onclick="copiarTextoRegistro()">Copiar</button>
+          <button class="btn-primary" id="btnCopiarRegistro" onclick="copiarTextoRegistro()">Copiar</button>
+          <button class="btn-primary" id="btnSalvarRegistro" onclick="salvarTreinamento()">Salvar</button>
         </div>
       </div>
     </div>
@@ -1083,6 +1121,23 @@
         </div>
       </div>
     </div>
+        <!-- MODAL DE VISUALIZAÇÃO DO TREINAMENTO SALVO -->
+        <div id="modalViewTreinamento" class="modal-overlay hidden">
+          <div class="modal-container">
+            <div class="modal-header">
+              <h3 id="viewTreinamentoTitulo">Treinamento</h3>
+              <button class="modal-close" onclick="fecharModalViewTreinamento()">×</button>
+            </div>
+            <div class="modal-body">
+              <div class="view-meta" id="viewTreinamentoTags"></div>
+              <div id="viewTreinamentoCorpo" class="view-body"></div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-secondary" onclick="fecharModalViewTreinamento()">Fechar</button>
+              <button class="btn-primary" onclick="copiarTreinamentoDoModalView()">Copiar</button>
+            </div>
+          </div>
+        </div>
 
     <div id="toastNotification" class="toast hidden">
       <span>Texto copiado para a área de transferência!</span>
@@ -1101,6 +1156,8 @@
       let itemViewAtual = null;
       let buscaAtiva = '';
       let produtosSelecionadosModal = [];
+            let treinamentosSalvos = [];   // [{id, data_treinamento, horario, texto_gerado, etiquetas, ...}]
+      let treinamentoViewAtual = null;
 
       /* ==================== HELPERS ==================== */
 
@@ -1171,6 +1228,68 @@
         }
 
         renderizarItens();
+      }
+      async function carregarTreinamentos() {
+        const { data, error } = await _supabase
+          .from('treinamentos')
+          .select('id, data_treinamento, horario, texto_gerado, etiquetas, created_at')
+          .order('data_treinamento', { ascending: false })
+          .order('horario', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao carregar treinamentos:', error);
+          treinamentosSalvos = [];
+          return;
+        }
+        treinamentosSalvos = data || [];
+        renderizarTreinamentos();
+      }
+
+      function labelEtiquetaTreinamento(etq) {
+        return etq;
+      }
+
+      function tituloTreinamento(t) {
+        if (!t.data_treinamento) return 'Treinamento';
+        const p = t.data_treinamento.split('-');
+        const dataFmt = `${p[2]}/${p[1]}/${p[0]}`;
+        const horaFmt = (t.horario || '').slice(0, 5);
+        return horaFmt ? `${dataFmt} - ${horaFmt}` : dataFmt;
+      }
+
+      function renderizarTreinamentos() {
+        const container = document.getElementById('listaTreinamentos');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (treinamentosSalvos.length === 0) {
+          container.innerHTML = '<div class="empty-state">Nenhum treinamento salvo ainda.</div>';
+          return;
+        }
+
+        treinamentosSalvos.forEach(t => {
+          const div = document.createElement('div');
+          div.className = 'item-card';
+          div.onclick = (e) => {
+            if (e.target.closest('.item-card-actions')) return;
+            abrirModalViewTreinamento(t.id);
+          };
+
+          const etiquetasHtml = (t.etiquetas || [])
+            .map(e => `<span class="item-card-category" style="margin-right:6px;">${escapeHtml(e)}</span>`)
+            .join('');
+
+          div.innerHTML = `
+            <div class="item-card-header">
+              <div class="item-card-title">${escapeHtml(tituloTreinamento(t))}</div>
+              <div class="item-card-actions">
+                <button class="btn-icon danger" onclick="event.stopPropagation(); excluirTreinamento('${t.id}')" title="Excluir">Excluir</button>
+              </div>
+            </div>
+            <div>${etiquetasHtml || '<span style="color:#9499a6; font-size:0.8rem;">Sem etiquetas</span>'}</div>
+          `;
+          container.appendChild(div);
+        });
       }
 
       /* ==================== MIGRAÇÃO AUTOMÁTICA ==================== */
@@ -2035,6 +2154,14 @@
         document.getElementById('regHora').value = `${h}:${m}`;
         document.getElementById('regNomes').value = '';
         document.getElementById('regNecessidade').value = '';
+        document.getElementById('regFinalidade').value = '';
+        document.getElementById('regPotencial').value = '';
+        document.getElementById('regAdicional').value = '';
+        ['regHora','regNomes','regNecessidade'].forEach(id => {
+          const el = document.getElementById(id);
+          el.style.borderColor = '';
+          el.style.boxShadow = '';
+        });
         carregarProdutosNoSelect();
         produtosSelecionadosModal = [];
         renderizarProdutosSelecionados();
@@ -2054,6 +2181,14 @@
         renderizarProdutosSelecionados();
         document.getElementById('novoProdutoBox').style.display = 'none';
         document.getElementById('regNovoProduto').value = '';
+        document.getElementById('regFinalidade').value = '';
+        document.getElementById('regPotencial').value = '';
+        document.getElementById('regAdicional').value = '';
+        ['regHora','regNomes','regNecessidade'].forEach(id => {
+          const el = document.getElementById(id);
+          el.style.borderColor = '';
+          el.style.boxShadow = '';
+        });
       }
 
       function carregarProdutosNoSelect() {
@@ -2143,35 +2278,264 @@
         });
       }
 
-      function atualizarPreviewRegistro() {
+      function validarCamposObrigatoriosRegistro() {
+        const campos = [
+          { id: 'regHora',       el: document.getElementById('regHora') },
+          { id: 'regNomes',      el: document.getElementById('regNomes') },
+          { id: 'regNecessidade',el: document.getElementById('regNecessidade') },
+        ];
+        let ok = true;
+        campos.forEach(c => {
+          const vazio = !c.el.value || !c.el.value.trim();
+          c.el.style.borderColor = vazio ? '#ef4444' : '';
+          c.el.style.boxShadow   = vazio ? '0 0 0 3px rgba(239,68,68,0.12)' : '';
+          if (vazio) ok = false;
+        });
+        return ok;
+      }
+
+      function montarTextoRegistroHTML() {
         const dataInput = document.getElementById('regData').value;
         const hora = document.getElementById('regHora').value;
         const nomes = document.getElementById('regNomes').value.trim();
         const necessidade = document.getElementById('regNecessidade').value.trim();
+        const finalidade = document.getElementById('regFinalidade').value.trim();
+        const potencial = document.getElementById('regPotencial').value;
+        const adicional = document.getElementById('regAdicional').value.trim();
+
         let dataFormatada = '[data]';
         if (dataInput) {
           const p = dataInput.split('-');
           dataFormatada = `${p[2]}/${p[1]}/${p[0]}`;
         }
-        const horaFormatada = hora || '[hora]';
-        const nomesFormatado = nomes || '[nomes]';
-        const necessidadeFormatada = necessidade || '[descrever necessidade]';
-        const produtosFormatado = produtosSelecionadosModal.length > 0
-          ? produtosSelecionadosModal.join(', ')
-          : '[produtos]';
 
-        const texto = `O treinamento foi realizado via Teams no dia ${dataFormatada}, às ${horaFormatada}, com participação de ${nomesFormatado}. A necessidade abordagem durante o treinamento foi ${necessidadeFormatada}. Foi demonstrado o produto ${produtosFormatado} e explicado sobre o processo de enriquecimento, consultas individuais e gerenciar. O link para avaliação de satisfação (CSAT) foi enviado após a reunião`;
+        const horaFormatada = hora || '[horário]';
+        const nomesFormatado = nomes ? `<b>${escapeHtml(nomes)}</b>` : '[participantes]';
+        const necessidadeFormatada = necessidade || '[necessidade/abordagem]';
+        const produtosTexto = produtosSelecionadosModal.length > 0
+          ? `<b>${escapeHtml(produtosSelecionadosModal.join(', '))}</b>`
+          : '<b>[produtos]</b>';
+        const finalidadeFormatada = finalidade || '[finalidade]';
+        const potencialFormatado = potencial ? `<b>${escapeHtml(potencial)}</b>` : '<b>[potencial]</b>';
+        const adicionalFormatado = adicional || '[adicional]';
 
-        document.getElementById('previewRegistro').innerText = texto;
+        return (
+`O treinamento foi realizado via Teams no dia ${dataFormatada}, às ${horaFormatada}, com participação de ${nomesFormatado}.
+
+A necessidade abordada durante o treinamento foi ${escapeHtml(necessidadeFormatada)}. Para atender a esta demanda, foi demonstrado o produto ${produtosTexto} e explicado sobre o processo de enriquecimento, consultas individuais e gerenciar.
+
+O cliente informou que os dados serão utilizados para ${escapeHtml(finalidadeFormatada)}.
+
+${escapeHtml(adicionalFormatado)}
+
+De acordo com a análise durante o treinamento, o cliente ${potencialFormatado}.
+O link para avaliação de satisfação (CSAT) foi enviado após a reunião`
+        );
       }
 
-      function copiarTextoRegistro() {
-        const texto = document.getElementById('previewRegistro').innerText;
-        navigator.clipboard.writeText(texto).then(() => {
-          const toast = document.getElementById('toastNotification');
-          toast.classList.remove('hidden');
-          setTimeout(() => toast.classList.add('hidden'), 2500);
-        });
+      function montarTextoRegistroPlano() {
+        // Versão texto puro (com *asteriscos*) para fallback de clipboard
+        const dataInput = document.getElementById('regData').value;
+        const hora = document.getElementById('regHora').value;
+        const nomes = document.getElementById('regNomes').value.trim();
+        const necessidade = document.getElementById('regNecessidade').value.trim();
+        const finalidade = document.getElementById('regFinalidade').value.trim();
+        const potencial = document.getElementById('regPotencial').value;
+        const adicional = document.getElementById('regAdicional').value.trim();
+
+        let dataFormatada = '[data]';
+        if (dataInput) {
+          const p = dataInput.split('-');
+          dataFormatada = `${p[2]}/${p[1]}/${p[0]}`;
+        }
+        const horaFormatada = hora || '[horário]';
+        const nomesFormatado = nomes ? `*${nomes}*` : '[participantes]';
+        const necessidadeFormatada = necessidade || '[necessidade/abordagem]';
+        const produtosTexto = produtosSelecionadosModal.length > 0
+          ? `*${produtosSelecionadosModal.join(', ')}*`
+          : '*[produtos]*';
+        const finalidadeFormatada = finalidade || '[finalidade]';
+        const potencialFormatado = potencial ? `*${potencial}*` : '*[potencial]*';
+        const adicionalFormatado = adicional || '[adicional]';
+
+        return (
+`O treinamento foi realizado via Teams no dia ${dataFormatada}, às ${horaFormatada}, com participação de ${nomesFormatado}.
+
+A necessidade abordada durante o treinamento foi ${necessidadeFormatada}. Para atender a esta demanda, foi demonstrado o produto ${produtosTexto} e explicado sobre o processo de enriquecimento, consultas individuais e gerenciar.
+
+O cliente informou que os dados serão utilizados para ${finalidadeFormatada}.
+
+${adicionalFormatado}
+
+De acordo com a análise durante o treinamento, o cliente ${potencialFormatado}.
+O link para avaliação de satisfação (CSAT) foi enviado após a reunião`
+        );
+      }
+
+      function atualizarPreviewRegistro() {
+        validarCamposObrigatoriosRegistro();
+        const html = montarTextoRegistroHTML();
+        // O preview usa <br> para preservar quebras de linha visualmente
+        document.getElementById('previewRegistro').innerHTML = html
+          .split('\n').join('<br>');
+      }
+
+      async function copiarParaClipboard(html, textoPlano) {
+        try {
+          if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+              'text/html':  new Blob([html],       { type: 'text/html' }),
+              'text/plain': new Blob([textoPlano], { type: 'text/plain' }),
+            });
+            await navigator.clipboard.write([item]);
+          } else {
+            await navigator.clipboard.writeText(textoPlano);
+          }
+          return true;
+        } catch (e) {
+          // fallback final
+          try {
+            await navigator.clipboard.writeText(textoPlano);
+            return true;
+          } catch (e2) {
+            console.error('Falha ao copiar:', e2);
+            return false;
+          }
+        }
+      }
+
+      function mostrarToast() {
+        const toast = document.getElementById('toastNotification');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2500);
+      }
+
+      async function copiarTextoRegistro() {
+        if (!validarCamposObrigatoriosRegistro()) {
+          alert('Preencha os campos obrigatórios: horário, participantes e necessidade.');
+          return;
+        }
+        const html = montarTextoRegistroHTML().split('\n').join('<br>');
+        const plano = montarTextoRegistroPlano();
+        const ok = await copiarParaClipboard(html, plano);
+        if (ok) mostrarToast();
+        else alert('Não foi possível copiar o texto.');
+      }
+
+      function calcularEtiquetasDoPotencial(potencial) {
+        if (!potencial) return [];
+        if (potencial.startsWith('Possuí potencial para Vox')) return ['Potencial Vox'];
+        if (potencial.startsWith('Possuí potencial para SMS')) return ['Potencial SMS'];
+        if (potencial.startsWith('Possuí potencial para SMS e Vox')) return ['Potencial Vox e SMS'];
+        return []; // opção 1 ou vazio
+      }
+
+      async function salvarTreinamento() {
+        if (!validarCamposObrigatoriosRegistro()) {
+          alert('Preencha os campos obrigatórios: horário, participantes e necessidade.');
+          return;
+        }
+
+        const dataInput = document.getElementById('regData').value;
+        const hora = document.getElementById('regHora').value;
+        const nomes = document.getElementById('regNomes').value.trim();
+        const necessidade = document.getElementById('regNecessidade').value.trim();
+        const finalidade = document.getElementById('regFinalidade').value.trim();
+        const potencial = document.getElementById('regPotencial').value;
+        const adicional = document.getElementById('regAdicional').value.trim();
+
+        // 1) copia antes de salvar (conforme solicitado)
+        const html = montarTextoRegistroHTML().split('\n').join('<br>');
+        const plano = montarTextoRegistroPlano();
+        await copiarParaClipboard(html, plano);
+
+        const textoPlano = montarTextoRegistroPlano();
+        const etiquetas = calcularEtiquetasDoPotencial(potencial);
+
+        const payload = {
+          data_treinamento: dataInput,
+          horario: hora,
+          participantes: nomes,
+          necessidade: necessidade,
+          produtos: produtosSelecionadosModal,
+          finalidade: finalidade || null,
+          potencial: potencial || null,
+          adicional: adicional || null,
+          texto_gerado: textoPlano,
+          etiquetas: etiquetas,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data, error } = await _supabase
+          .from('treinamentos')
+          .insert(payload)
+          .select('id, data_treinamento, horario, texto_gerado, etiquetas, created_at')
+          .single();
+
+        if (error) {
+          console.error('Erro ao salvar treinamento:', error);
+          alert('Erro ao salvar no banco. Tente novamente.');
+          return;
+        }
+
+        treinamentosSalvos.unshift(data);
+        renderizarTreinamentos();
+        mostrarToast();
+        fecharModalRegistro();
+      }
+
+      async function excluirTreinamento(id) {
+        if (!confirm('Deseja realmente excluir este treinamento?')) return;
+
+        const { error } = await _supabase
+          .from('treinamentos')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Erro ao excluir treinamento:', error);
+          alert('Erro ao excluir no banco. Tente novamente.');
+          return;
+        }
+
+        treinamentosSalvos = treinamentosSalvos.filter(t => t.id !== id);
+        renderizarTreinamentos();
+        if (treinamentoViewAtual && treinamentoViewAtual.id === id) {
+          fecharModalViewTreinamento();
+        }
+      }
+
+      function abrirModalViewTreinamento(id) {
+        const t = treinamentosSalvos.find(x => x.id === id);
+        if (!t) return;
+        treinamentoViewAtual = t;
+
+        document.getElementById('viewTreinamentoTitulo').innerText = tituloTreinamento(t);
+
+        const tagsContainer = document.getElementById('viewTreinamentoTags');
+        tagsContainer.innerHTML = (t.etiquetas || [])
+          .map(e => `<span class="view-meta-pill">${escapeHtml(e)}</span>`)
+          .join('');
+
+        const corpo = document.getElementById('viewTreinamentoCorpo');
+        corpo.innerHTML = escapeHtml(t.texto_gerado || '').split('\n').join('<br>');
+
+        document.getElementById('modalViewTreinamento').classList.remove('hidden');
+      }
+
+      function fecharModalViewTreinamento() {
+        document.getElementById('modalViewTreinamento').classList.add('hidden');
+        treinamentoViewAtual = null;
+      }
+
+      async function copiarTreinamentoDoModalView() {
+        if (!treinamentoViewAtual) return;
+        // Preserva negrito reaplicando os <b> nos campos conhecidos via payload salvo
+        // Como o texto já foi salvo em plano com *asteriscos*, convertemos para HTML do WhatsApp
+        const plano = treinamentoViewAtual.texto_gerado || '';
+        const html = whatsAppParaHTML(plano);
+        const ok = await copiarParaClipboard(html, plano);
+        if (ok) mostrarToast();
       }
 
       /* ==================== INICIALIZAÇÃO ==================== */

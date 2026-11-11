@@ -184,7 +184,7 @@ body{background:var(--fundo);display:flex;min-height:100vh;color:var(--texto);fo
       <div class="kpi-strip">
         <div class="kpi k-purple"><div class="kpi-value" id="kpiLembretes">—</div><div><span class="kpi-label">Lembretes em aberto</span><div class="kpi-sub">Para hoje</div></div></div>
         <div class="kpi k-red"><div class="kpi-value" id="kpiCriticas">—</div><div><span class="kpi-label">Solicitações críticas</span><div class="kpi-sub">Sem retorno / efetivação</div></div></div>
-        <div class="kpi k-amber"><div class="kpi-value" id="kpiAtencao">—</div><div><span class="kpi-label">Aguardando retorno</span><div class="kpi-sub">1º dia sem retorno</div></div></div>
+        <div class="kpi k-amber"><div class="kpi-value" id="kpiAtencao">—</div><div><span class="kpi-label">Aguardando retorno</span><div class="kpi-sub">1º, 2º e 3º dia sem retorno</div></div></div>
         <div class="kpi k-green"><div class="kpi-value" id="kpiStatus">—</div><div><span class="kpi-label">Status do dia</span><div class="kpi-sub" id="kpiStatusSub"></div></div></div>
       </div>
     </section>
@@ -361,11 +361,20 @@ async function carregarSolicitacoesAtencao(){
     if(error)throw error;
     const hoje=hojeLocal();
     const efetivaHoje=s=>s.tipo_solicitacao==='Cancelamento'&&s.data_efetivacao&&String(s.data_efetivacao).slice(0,10)===hoje;
-    const nivel=s=>(s.status==='Atenção'||efetivaHoje(s))?3:s.status==='Sem Retorno 2° Dia'?2:s.status==='Sem Retorno 1° Dia'?1:0;
+    
+    const nivel=s=>{
+      if(s.status==='Atenção'||efetivaHoje(s)) return 3;
+      if(s.status==='Sem Retorno 2° Dia') return 2;
+      if(s.status==='Sem Retorno 1° Dia') return 1;
+      return 0;
+    };
+
     const atencao=(data||[]).filter(s=>nivel(s)>0).sort((a,b)=>nivel(b)-nivel(a));
     document.getElementById('solicitacoesCount').textContent=atencao.length;
-    totalCriticasAbertas=atencao.filter(s=>nivel(s)>=2).length;
-    totalAtencaoAbertas=atencao.filter(s=>nivel(s)===1).length;
+    
+    totalCriticasAbertas=atencao.filter(s=>nivel(s)===3).length;
+    totalAtencaoAbertas=atencao.length; 
+    
     document.getElementById('kpiCriticas').textContent=totalCriticasAbertas;
     document.getElementById('kpiAtencao').textContent=totalAtencaoAbertas;
 
